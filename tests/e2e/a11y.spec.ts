@@ -13,10 +13,17 @@ test('axe-core: 有 todo 时 0 violation', async ({ page }) => {
   expect(results.violations).toEqual([])
 })
 
-test('Tab 序列: theme-toggle → priority-select → todo-input 可达', async ({ page }) => {
-  // DOM 顺序：theme-toggle → priority-select → todo-input
+test('Tab 序列: theme-toggle → ListManager → priority-select → todo-input 可达', async ({ page }) => {
+  // DOM 顺序：theme-toggle → list-btn-all → list-name-input → priority-select → todo-input
+  // list-create-btn 在空输入时 disabled，跳过 tab 序列
   await page.keyboard.press('Tab')
   await expect(page.getByTestId('theme-toggle')).toBeFocused()
+
+  await page.keyboard.press('Tab')
+  await expect(page.getByTestId('list-btn-all')).toBeFocused()
+
+  await page.keyboard.press('Tab')
+  await expect(page.getByTestId('list-name-input')).toBeFocused()
 
   await page.keyboard.press('Tab')
   await expect(page.getByTestId('priority-select')).toBeFocused()
@@ -79,6 +86,9 @@ test('aria snapshot: 有 todo 时 main 区域结构', async ({ page }) => {
   await expect(page.locator('main')).toMatchAriaSnapshot(`
     - main:
       - heading /Todo/
+      - button "全部"
+      - textbox "新列表名称"
+      - button "新建" [disabled]
       - combobox "优先级"
       - textbox "新待办事项"
       - button "添加待办"

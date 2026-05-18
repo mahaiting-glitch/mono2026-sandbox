@@ -9,6 +9,7 @@ import KanbanView from './components/KanbanView.vue'
 import CalendarView from './components/CalendarView.vue'
 import TodoForm from './components/TodoForm.vue'
 import TodoList from './components/TodoList.vue'
+import ListManager from './components/ListManager.vue'
 import { LS_VIEW_KEY } from './constants/storage-keys'
 
 function readSavedView(): ViewType {
@@ -93,6 +94,7 @@ onMounted(() => {
     <h1 class="text-2xl font-semibold mb-6" data-testid="heading">{{ store.headingText }}</h1>
 
     <template v-if="activeView === 'list'">
+      <ListManager />
       <TodoForm ref="todoFormRef" />
       <TodoList />
     </template>
