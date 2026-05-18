@@ -41,3 +41,24 @@ test('空字符串拦', async ({ page }) => {
   await page.getByTestId('todo-input').fill('   ')
   await expect(btn).toBeDisabled()
 })
+
+test('dark mode 切换 + 持久化', async ({ page }) => {
+  // 强制 light 起点
+  await page.evaluate(() => localStorage.setItem('mono2026-sandbox.colorScheme', 'light'))
+  await page.reload()
+
+  const html = page.locator('html')
+  await expect(html).not.toHaveClass(/dark/)
+
+  // 点一下 → dark
+  await page.getByTestId('theme-toggle').click()
+  await expect(html).toHaveClass(/dark/)
+
+  // 刷新 → 还是 dark（localStorage 持久化）
+  await page.reload()
+  await expect(html).toHaveClass(/dark/)
+
+  // 再点 → 回 light
+  await page.getByTestId('theme-toggle').click()
+  await expect(html).not.toHaveClass(/dark/)
+})
