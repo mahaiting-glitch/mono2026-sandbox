@@ -65,4 +65,22 @@ describe('useTodoStore', () => {
     expect(s.total).toBe(1)
     expect(s.items[0]!.title).toBe('b')
   })
+
+  it('localStorage 损坏·非 JSON → 回退 []', () => {
+    localStorage.setItem('mono2026-sandbox.todos', 'not-valid-json')
+    const s = useTodoStore()
+    expect(s.total).toBe(0)
+  })
+
+  it('localStorage 损坏·非数组 → 回退 []', () => {
+    localStorage.setItem('mono2026-sandbox.todos', JSON.stringify({ foo: 1 }))
+    const s = useTodoStore()
+    expect(s.total).toBe(0)
+  })
+
+  it('localStorage 损坏·数组但 item 缺字段 → 回退 []', () => {
+    localStorage.setItem('mono2026-sandbox.todos', JSON.stringify([{ id: '1', title: 'x' }]))
+    const s = useTodoStore()
+    expect(s.total).toBe(0)
+  })
 })
