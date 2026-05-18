@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useTodoStore } from '../../src/stores/todo'
+import { LS_TODOS_LEGACY_KEY } from '../../src/constants/storage-keys'
 
 // Mock idb-keyval in-memory
 const idbStore: Record<string, unknown> = {}
@@ -240,7 +241,7 @@ describe('useTodoStore', () => {
   describe('localStorage 迁移', () => {
     it('首次启动从 localStorage 迁移到 IDB · 补 priority 默认值', async () => {
       const todos = [{ id: '1', title: '迁移测试', done: false, createdAt: 123 }]
-      localStorage.setItem('mono2026-sandbox.todos', JSON.stringify(todos))
+      localStorage.setItem(LS_TODOS_LEGACY_KEY, JSON.stringify(todos))
 
       const s = useTodoStore()
       await s._initPromise
@@ -248,7 +249,7 @@ describe('useTodoStore', () => {
       expect(s.total).toBe(1)
       expect(s.items[0]!.title).toBe('迁移测试')
       expect(s.items[0]!.priority).toBe('normal')
-      expect(localStorage.getItem('mono2026-sandbox.todos')).toBeNull()
+      expect(localStorage.getItem(LS_TODOS_LEGACY_KEY)).toBeNull()
       // 写入 IDB 时已补上 priority + schema version
       expect(idbStore['todos']).toEqual({ __schema_version: 1, items: [{ ...todos[0], priority: 'normal' }] })
     })
@@ -258,7 +259,7 @@ describe('useTodoStore', () => {
       idbStore['todos'] = existing
 
       const old = [{ id: '1', title: '旧 localStorage 数据', done: false, createdAt: 123 }]
-      localStorage.setItem('mono2026-sandbox.todos', JSON.stringify(old))
+      localStorage.setItem(LS_TODOS_LEGACY_KEY, JSON.stringify(old))
 
       const s = useTodoStore()
       await s._initPromise
@@ -266,7 +267,7 @@ describe('useTodoStore', () => {
       expect(s.total).toBe(1)
       expect(s.items[0]!.title).toBe('已有数据')
       expect(s.items[0]!.priority).toBe('normal')
-      expect(localStorage.getItem('mono2026-sandbox.todos')).toBeNull()
+      expect(localStorage.getItem(LS_TODOS_LEGACY_KEY)).toBeNull()
     })
 
     it('IDB 旧数据无 priority → read 补默认值', async () => {
@@ -280,33 +281,33 @@ describe('useTodoStore', () => {
     })
 
     it('localStorage 数据损坏·JSON 无效 → 清 localStorage 不影响 IDB', async () => {
-      localStorage.setItem('mono2026-sandbox.todos', 'not-valid-json')
+      localStorage.setItem(LS_TODOS_LEGACY_KEY, 'not-valid-json')
 
       const s = useTodoStore()
       await s._initPromise
 
       expect(s.total).toBe(0)
-      expect(localStorage.getItem('mono2026-sandbox.todos')).toBeNull()
+      expect(localStorage.getItem(LS_TODOS_LEGACY_KEY)).toBeNull()
     })
 
     it('localStorage 数据损坏·非数组 → 清 localStorage', async () => {
-      localStorage.setItem('mono2026-sandbox.todos', JSON.stringify({ foo: 1 }))
+      localStorage.setItem(LS_TODOS_LEGACY_KEY, JSON.stringify({ foo: 1 }))
 
       const s = useTodoStore()
       await s._initPromise
 
       expect(s.total).toBe(0)
-      expect(localStorage.getItem('mono2026-sandbox.todos')).toBeNull()
+      expect(localStorage.getItem(LS_TODOS_LEGACY_KEY)).toBeNull()
     })
 
     it('localStorage 数据损坏·数组但 item 缺字段 → 清 localStorage', async () => {
-      localStorage.setItem('mono2026-sandbox.todos', JSON.stringify([{ id: '1', title: 'x' }]))
+      localStorage.setItem(LS_TODOS_LEGACY_KEY, JSON.stringify([{ id: '1', title: 'x' }]))
 
       const s = useTodoStore()
       await s._initPromise
 
       expect(s.total).toBe(0)
-      expect(localStorage.getItem('mono2026-sandbox.todos')).toBeNull()
+      expect(localStorage.getItem(LS_TODOS_LEGACY_KEY)).toBeNull()
     })
 
     it('无 localStorage 数据 → 正常启动 IDB 为空', async () => {

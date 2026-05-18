@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test'
-
-const LS_VIEW_KEY = 'mono2026-sandbox.view'
+import { LS_VIEW_KEY } from '../../src/constants/storage-keys'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
