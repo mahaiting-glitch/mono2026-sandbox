@@ -71,6 +71,8 @@
 
    9b、**常量与派生类型同文件 co-locate**——常量文件同时 `export type X = ...`，消费方直接 `import type { X }` 不用绕去 `types.ts`；若需统一入口，`types.ts` 可 re-export（`export type { X } from '../constants/xs'`），不在 `types.ts` 里重新 `type X = ...`（re-export 只转发、不重新声明）。
 
+10、**SVG 图标按复用次数决定内联 / 组件**——单处一次性图标允许直接内联 `<svg>`；同一图标出现 ≥2 处必须提取为独立组件（如 `components/icons/IconPlus.vue`），通过 `<IconPlus class="h-5 w-5" />` 引用。尺寸由调用方 `class` 控制，组件内不写硬编码尺寸（如 `h-5 w-5`）；图标组件默认加 `aria-hidden="true"`（纯装饰图标不进 a11y 树），`fill` 默认 `currentColor`（调用方用 `text-*` 控制颜色）。
+
 ## 反例
 
 - ❌ boolean prop 不用 is/has/can 前缀：`completed`、`error`（应为 `isCompleted`、`hasError`）
@@ -89,3 +91,4 @@
 - ❌ 注释解释「这里干嘛」（命名要够好）
 - ❌ `types.ts` 手写 `type ViewType = 'list' | 'kanban' | 'calendar'`，同时 `tabs.ts` 单独维护同一组值（双写漂移）
 - ❌ 常量文件只 export 数据、消费方绕去 `types.ts` 取同名类型（非 co-locate）
+- ❌ 同一 SVG path 硬编码在 ≥2 个组件模板里（改图标需多处同步，应提取为 `components/icons/IconXxx.vue`）；✅ `<IconPlus class="h-5 w-5" />`（`components/icons/IconPlus.vue` 只含 `<svg aria-hidden="true" fill="currentColor" ...>`）
