@@ -2,7 +2,9 @@
 
 1、**TypeScript strict 全开**——`strict: true` + `noUncheckedIndexedAccess: true`。
 
-2、**Vue 3 script setup + composables**——禁 Options API、共享逻辑抽 `useXxx()`。
+2、**Vue 3 script setup + composables**——禁 Options API、共享逻辑抽 `useXxx()`（见 2a）。
+
+   2a、**composable 至少 2 处复用才抽**——`useXxx()` 独立文件只在 ≥2 个地方复用时才建；单处使用直接写在当前组件 / store 内，不要「为拆而拆」（与 3a 同源：单处抽离 = 无意义分层、增加跳转负担）。
 
 3、**Pinia store 用 setup 风格**——`defineStore('todo', () => {...})`、不写 options 形式。
 
@@ -24,6 +26,7 @@
 
 - ❌ Options API `export default { data() { return {...} } }`
 - ❌ Pinia options 形式 `defineStore('todo', { state: () => ({...}), actions: {...} })`
+- ❌ 只一处用到却单独抽 `useXxx.ts`（无复用 = 无意义分层）
 - ❌ Pinia 按文件类型拆：`useTodoState.ts` + `useTodoGetters.ts`（无复用价值、状态来源更难追）
 - ❌ 纯 refactor PR 净增文件 / 行数却不说明「未来谁会复用」
 - ❌ 一 PR 改 500 行跨 5 个 feature
