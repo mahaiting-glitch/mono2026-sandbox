@@ -3,16 +3,18 @@ import { computed } from 'vue'
 import { useTodoStore } from '../stores/todo'
 import { PRIORITY_EMOJI } from '../constants/priority'
 import { groupTodosByDay } from '../utils/calendar'
+import { useActiveListFilter } from '../composables/useActiveListFilter'
 
 const store = useTodoStore()
+const filteredItems = useActiveListFilter(() => store.items)
 
-const groupedByDay = computed(() => groupTodosByDay(store.items))
+const groupedByDay = computed(() => groupTodosByDay(filteredItems.value))
 </script>
 
 <template>
   <div class="mt-6 space-y-6">
     <p
-      v-if="store.items.length === 0"
+      v-if="filteredItems.length === 0"
       class="text-sm text-slate-400 dark:text-slate-500 text-center py-4"
       data-testid="calendar-empty"
     >
