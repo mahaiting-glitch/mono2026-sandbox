@@ -42,6 +42,63 @@ test('空字符串拦', async ({ page }) => {
   await expect(btn).toBeDisabled()
 })
 
+test('行内编辑 · 双击 → enter 保存', async ({ page }) => {
+  await page.getByTestId('todo-input').fill('原始标题')
+  await page.getByTestId('todo-add').click()
+
+  // 双击标题进入编辑模式
+  await page.getByTestId('todo-title').dblclick()
+  await expect(page.getByTestId('todo-edit-input')).toBeVisible()
+  await expect(page.getByTestId('todo-title')).not.toBeVisible()
+
+  // 清空 + 输入新内容 + enter
+  await page.getByTestId('todo-edit-input').fill('修改后标题')
+  await page.getByTestId('todo-edit-input').press('Enter')
+
+  // 保存后 input 消失、标题更新
+  await expect(page.getByTestId('todo-edit-input')).not.toBeVisible()
+  await expect(page.getByTestId('todo-title')).toHaveText('修改后标题')
+})
+
+test('行内编辑 · Esc 取消', async ({ page }) => {
+  await page.getByTestId('todo-input').fill('原始标题')
+  await page.getByTestId('todo-add').click()
+
+  await page.getByTestId('todo-title').dblclick()
+  await page.getByTestId('todo-edit-input').fill('修改中')
+  await page.getByTestId('todo-edit-input').press('Escape')
+
+  // 取消后回原值
+  await expect(page.getByTestId('todo-title')).toHaveText('原始标题')
+})
+
+test('行内编辑 · 空字符串不保存', async ({ page }) => {
+  await page.getByTestId('todo-input').fill('原始标题')
+  await page.getByTestId('todo-add').click()
+
+  await page.getByTestId('todo-title').dblclick()
+  await page.getByTestId('todo-edit-input').fill('   ')
+  await page.getByTestId('todo-edit-input').press('Enter')
+
+  // 空字符串不保存、回原值
+  await expect(page.getByTestId('todo-title')).toHaveText('原始标题')
+})
+
+test('行内编辑 · 只允许单行编辑', async ({ page }) => {
+  await page.getByTestId('todo-input').fill('第一条')
+  await page.getByTestId('todo-add').click()
+  await page.getByTestId('todo-input').fill('第二条')
+  await page.getByTestId('todo-add').click()
+
+  // 双击第一条进入编辑
+  await page.getByTestId('todo-title').first().dblclick()
+  await expect(page.getByTestId('todo-edit-input')).toHaveCount(1)
+
+  // 双击第二条 → 第一条自动保存、第二条进入编辑
+  await page.getByTestId('todo-title').dblclick()
+  await expect(page.getByTestId('todo-edit-input')).toHaveCount(1)
+})
+
 test('dark mode 切换 + 持久化', async ({ page }) => {
   // 强制 light 起点
   await page.evaluate(() => localStorage.setItem('mono2026-sandbox.colorScheme', 'light'))

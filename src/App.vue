@@ -1,15 +1,43 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useTodoStore } from './stores/todo'
 import { useColorSchemeStore } from './stores/colorScheme'
 
 const store = useTodoStore()
 const colorScheme = useColorSchemeStore()
 const input = ref('')
+const editingId = ref<string | null>(null)
+const editingTitle = ref('')
+const editInputRefs = ref<Record<string, HTMLInputElement | null>>({})
+
+watch(editingId, (id) => {
+  if (!id) return
+  nextTick(() => {
+    const el = editInputRefs.value[id]
+    el?.focus()
+    el?.select()
+  })
+})
 
 function submit() {
   store.add(input.value)
   input.value = ''
+}
+
+function startEdit(id: string, title: string) {
+  editingId.value = id
+  editingTitle.value = title
+}
+
+function saveEdit() {
+  const id = editingId.value
+  if (!id) return
+  store.edit(id, editingTitle.value)
+  editingId.value = null
+}
+
+function cancelEdit() {
+  editingId.value = null
 }
 </script>
 
@@ -56,7 +84,24 @@ function submit() {
           @change="store.toggle(todo.id)"
           class="h-4 w-4"
         />
-        <span :class="{ 'line-through text-slate-400': todo.done }" class="flex-1">{{ todo.title }}</span>
+        <span
+          v-if="editingId !== todo.id"
+          :class="{ 'line-through text-slate-400': todo.done }"
+          class="flex-1 cursor-text"
+          data-testid="todo-title"
+          @dblclick="startEdit(todo.id, todo.title)"
+        >{{ todo.title }}</span>
+        <input
+          v-else
+          :ref="(el) => { editInputRefs[todo.id] = el as HTMLInputElement | null }"
+          v-model="editingTitle"
+          type="text"
+          class="flex-1 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          data-testid="todo-edit-input"
+          @blur="saveEdit"
+          @keydown.enter.prevent="saveEdit"
+          @keydown.esc="cancelEdit"
+        />
         <button
           type="button"
           @click="store.remove(todo.id)"
