@@ -1,11 +1,4 @@
-import { test, expect } from '@playwright/test'
-import { LS_VIEW_KEY } from '../../src/constants/storage-keys'
-
-test.beforeEach(async ({ page }) => {
-  await page.goto('/')
-  await page.evaluate((key) => localStorage.removeItem(key), LS_VIEW_KEY)
-  await page.reload()
-})
+import { test, expect } from './fixtures'
 
 test('日历视图 · 添加 todo 后切换日历视图，今天区块内显示该 todo', async ({ page }) => {
   const todayLabel = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })

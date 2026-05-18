@@ -28,6 +28,28 @@
 
 6、**测试三层都跑**：vitest 单测（store / 工具函数）+ Playwright e2e（关键链路）。提交前 `pnpm test && pnpm test:e2e` 必过。
 
+   6a、**≥2 个 spec 共用相同前置逻辑时提取为 Playwright `base.extend` fixture**——当 ≥2 个 spec 文件写了**完全相同**的 `beforeEach`（如页面初始化 + localStorage 清理 + IDB 清理 + reload），应提取到 `tests/e2e/fixtures.ts`，用 `base.extend` 覆盖内置 `page` fixture；各 spec 从 `'./fixtures'` 导入 `test` 和 `expect`，不从 `'@playwright/test'` 直接导入再写重复 `beforeEach`。单文件内多 case 共享前置时可用 `test.beforeEach`；有特殊初始化需求（如 `addInitScript` 必须在 goto 前）的 spec 不适用此规则。范例：PR [#67](https://github.com/mahaiting-glitch/mono2026-sandbox/pull/67)。
+
+   ```ts
+   // tests/e2e/fixtures.ts
+   import { test as base, expect } from '@playwright/test'
+   export const test = base.extend({
+     page: async ({ page }, use) => {
+       await page.goto('/')
+       // 清理 localStorage + IDB，详见 tests/e2e/fixtures.ts
+       await page.reload()
+       await use(page)
+     },
+   })
+   export { expect }
+   ```
+
+   ```ts
+   // tests/e2e/foo.spec.ts
+   import { test, expect } from './fixtures'  // ✅ 从 fixtures 导入
+   // import { test, expect } from '@playwright/test' // ❌ 不直接导入 + 再写 beforeEach
+   ```
+
 7、**改动范围 ≤ 200 行 / PR**——拆得越细越好、单 issue 单关注点；大改动拆里程碑。
 
 8、**Commit message 中文 + conventional 前缀**——`feat:` / `fix:` / `docs:` / `test:` / `chore:` / `refactor:`、标题 ≤ 50 字。
@@ -63,6 +85,7 @@
 - ❌ 一 PR 改 500 行跨 5 个 feature
 - ❌ 写 `tailwind.config.js`
 - ❌ 两个状态分支各自重复写大段公共 Tailwind 类，改间距时需同步两处（应提取公共前缀到 `base` 变量 + 模板字符串拼接差异部分）
+- ❌ ≥2 个 spec 写了**完全相同**的前置逻辑（如 IDB 清理 + reload）却各自重复 `beforeEach`，而不是提取到 `tests/e2e/fixtures.ts`（`base.extend` fixture）
 - ❌ 注释解释「这里干嘛」（命名要够好）
 - ❌ `types.ts` 手写 `type ViewType = 'list' | 'kanban' | 'calendar'`，同时 `tabs.ts` 单独维护同一组值（双写漂移）
 - ❌ 常量文件只 export 数据、消费方绕去 `types.ts` 取同名类型（非 co-locate）
