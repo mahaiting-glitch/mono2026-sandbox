@@ -1,6 +1,9 @@
-import { createApp } from 'vue'
+import { createApp, h } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
+import ErrorBoundary from './components/ErrorBoundary.vue'
 import './style.css'
 
-createApp(App).use(createPinia()).mount('#app')
+createApp({ render: () => h(ErrorBoundary, null, { default: () => h(App) }) })
+  .use(createPinia())
+  .mount('#app')
