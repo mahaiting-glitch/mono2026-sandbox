@@ -1,11 +1,4 @@
-import { test, expect } from '@playwright/test'
-import { LS_VIEW_KEY } from '../../src/constants/storage-keys'
-
-test.beforeEach(async ({ page }) => {
-  await page.goto('/')
-  await page.evaluate((key) => localStorage.removeItem(key), LS_VIEW_KEY)
-  await page.reload()
-})
+import { test, expect } from './fixtures'
 
 test('看板视图 · 显示左右两栏列标题', async ({ page }) => {
   await page.getByTestId('tab-kanban').click()

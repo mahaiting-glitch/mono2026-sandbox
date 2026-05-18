@@ -1,11 +1,4 @@
-import { test, expect } from '@playwright/test'
-import { LS_VIEW_KEY } from '../../src/constants/storage-keys'
-
-test.beforeEach(async ({ page }) => {
-  await page.goto('/')
-  await page.evaluate((key) => localStorage.removeItem(key), LS_VIEW_KEY)
-  await page.reload()
-})
+import { test, expect } from './fixtures'
 
 test('Tab 切换 · 默认列表视图', async ({ page }) => {
   await expect(page.getByTestId('tab-list')).toHaveAttribute('aria-current', 'page')
