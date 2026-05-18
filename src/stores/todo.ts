@@ -30,16 +30,18 @@ export const useTodoStore = defineStore('todo', () => {
     })
   )
 
-  function add(title: string, priority: Priority = 'normal') {
+  function add(title: string, priority: Priority = 'normal', listId?: string) {
     const trimmed = title.trim()
     if (!trimmed) return
-    items.value.push({
+    const todo: Todo = {
       id: crypto.randomUUID(),
       title: trimmed,
       done: false,
       createdAt: Date.now(),
       priority,
-    })
+    }
+    if (listId) todo.listId = listId
+    items.value.push(todo)
   }
 
   function setPriority(id: string, priority: Priority) {
