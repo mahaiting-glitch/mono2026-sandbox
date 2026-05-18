@@ -310,10 +310,10 @@ function cancelNoteEdit() {
       </select>
     </div>
 
-    <div class="mt-8 text-center text-xs text-slate-500" data-testid="milestone-footer">
-      当前阶段：{{ MILESTONE }}
-    </div>
-    <div class="mt-1 text-center text-xs text-slate-500" data-testid="app-version">v{{ APP_VERSION }} · {{ GIT_COMMIT }}</div>
+    <footer class="mt-8 text-center text-xs text-slate-500 space-y-1">
+      <div data-testid="milestone-footer">当前阶段：{{ MILESTONE }}</div>
+      <div data-testid="app-version">v{{ APP_VERSION }} · {{ GIT_COMMIT }}</div>
+    </footer>
   </main>
   <TabBar :active="activeView" @change="activeView = $event" />
 </template>
