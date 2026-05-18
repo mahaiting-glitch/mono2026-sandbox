@@ -3,6 +3,7 @@ import type { Todo, Priority } from '../types'
 
 const LEGACY_LS_KEY = 'mono2026-sandbox.todos'
 const IDB_KEY = 'todos'
+const SCHEMA_VERSION = 1
 
 const VALID_PRIORITIES = new Set<string>(['high', 'normal', 'low'])
 
@@ -29,15 +30,34 @@ function normalizeTodo(r: Record<string, unknown>): Todo {
   }
 }
 
+interface StoredTodos {
+  __schema_version: number
+  items: unknown[]
+}
+
+function isStoredTodos(v: unknown): v is StoredTodos {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return false
+  const r = v as Record<string, unknown>
+  return typeof r.__schema_version === 'number' && Array.isArray(r.items)
+}
+
 export function useTodoStorage() {
   async function read(): Promise<Todo[]> {
     const val = await get<unknown>(IDB_KEY)
-    if (Array.isArray(val) && val.every(isTodoLike)) return val.map(normalizeTodo)
+    if (isStoredTodos(val)) {
+      return val.items.filter(isTodoLike).map(normalizeTodo)
+    }
+    // Legacy: plain array without schema version — auto-upgrade to v1 on first read
+    if (Array.isArray(val) && val.every(isTodoLike)) {
+      const todos = val.map(normalizeTodo)
+      await set(IDB_KEY, { __schema_version: SCHEMA_VERSION, items: todos })
+      return todos
+    }
     return []
   }
 
   async function write(todos: Todo[]): Promise<void> {
-    await set(IDB_KEY, todos)
+    await set(IDB_KEY, { __schema_version: SCHEMA_VERSION, items: todos })
   }
 
   // Migrate from localStorage on first run; IDB takes precedence if it already has data.
@@ -48,7 +68,7 @@ export function useTodoStorage() {
       const parsed: unknown = JSON.parse(raw)
       const existing = await get<unknown>(IDB_KEY)
       if (Array.isArray(parsed) && parsed.every(isTodoLike) && existing === undefined) {
-        await set(IDB_KEY, parsed.map(normalizeTodo))
+        await set(IDB_KEY, { __schema_version: SCHEMA_VERSION, items: parsed.map(normalizeTodo) })
       }
     } catch {
       // corrupt localStorage data — just clean it up

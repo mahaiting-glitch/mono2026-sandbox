@@ -176,8 +176,8 @@ describe('useTodoStore', () => {
       expect(s.items[0]!.title).toBe('迁移测试')
       expect(s.items[0]!.priority).toBe('normal')
       expect(localStorage.getItem('mono2026-sandbox.todos')).toBeNull()
-      // 写入 IDB 时已补上 priority
-      expect(idbStore['todos']).toEqual([{ ...todos[0], priority: 'normal' }])
+      // 写入 IDB 时已补上 priority + schema version
+      expect(idbStore['todos']).toEqual({ __schema_version: 1, items: [{ ...todos[0], priority: 'normal' }] })
     })
 
     it('IDB 已有数据时不覆盖、仅清 localStorage', async () => {
