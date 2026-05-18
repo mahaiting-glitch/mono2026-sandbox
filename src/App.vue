@@ -35,6 +35,13 @@ function onKeydown(e: KeyboardEvent) {
 onMounted(() => document.addEventListener('keydown', onKeydown))
 onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
+// e2e crash hook: set window.__crash__ = true before navigation to trigger ErrorBoundary
+onMounted(() => {
+  if ((window as Window & { __crash__?: boolean }).__crash__) {
+    throw new Error('intentional crash for ErrorBoundary e2e test')
+  }
+})
+
 watch(editingId, (id) => {
   if (!id) return
   nextTick(() => {
