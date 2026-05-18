@@ -2,7 +2,22 @@ import { test, expect } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await page.evaluate(() => localStorage.clear())
+  await page.evaluate(async () => {
+    localStorage.clear()
+    // Clear the 'todos' key without deleting the whole DB (avoids blocked-connection timeout)
+    await new Promise<void>(resolve => {
+      const openReq = indexedDB.open('keyval-store')
+      openReq.onerror = () => resolve()
+      openReq.onsuccess = () => {
+        const db = openReq.result
+        if (!db.objectStoreNames.contains('keyval')) { db.close(); resolve(); return }
+        const tx = db.transaction('keyval', 'readwrite')
+        tx.objectStore('keyval').delete('todos')
+        tx.oncomplete = () => { db.close(); resolve() }
+        tx.onerror = () => { db.close(); resolve() }
+      }
+    })
+  })
   await page.reload()
 })
 
@@ -112,6 +127,34 @@ test('/ 键焦点已在输入框时不拦截', async ({ page }) => {
   await page.keyboard.press('/')
   // 能正常输入 /（input value 应含 /）
   await expect(input).toHaveValue('/')
+})
+
+test('IDB 持久化 · 刷新后数据还在', async ({ page }) => {
+  // 直接向 IDB 写数据（模拟上次 session），验证 Vue app 启动时能正确从 IDB 读取
+  await page.evaluate(async () => {
+    return new Promise<void>(resolve => {
+      const req = indexedDB.open('keyval-store', 1)
+      req.onupgradeneeded = () => { req.result.createObjectStore('keyval') }
+      req.onsuccess = () => {
+        const db = req.result
+        const tx = db.transaction('keyval', 'readwrite')
+        tx.objectStore('keyval').put(
+          [{ id: 'persist1', title: '持久化测试', done: false, createdAt: 1 }],
+          'todos'
+        )
+        tx.oncomplete = () => { db.close(); resolve() }
+        tx.onerror = () => { db.close(); resolve() }
+      }
+      req.onerror = () => resolve()
+    })
+  })
+
+  // 刷新页面（模拟新 session）
+  await page.reload()
+
+  // Vue app 应从 IDB 读取数据
+  await expect(page.getByTestId('remaining')).toHaveText('还剩 1 / 1')
+  await expect(page.getByTestId('todo-title')).toHaveText('持久化测试')
 })
 
 test('dark mode 切换 + 持久化', async ({ page }) => {
