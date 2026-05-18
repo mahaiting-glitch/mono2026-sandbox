@@ -77,7 +77,11 @@ export const useTodoStore = defineStore('todo', () => {
     }
   }
 
+  function getTodosByListId(listId: string) {
+    return items.value.filter(t => t.listId === listId)
+  }
+
   watch(items, v => { if (initialized) void storage.write(v) }, { deep: true })
 
-  return { items, sortedItems, remaining, total, headingText, add, toggle, remove, clearDone, edit, setPriority, setNote, _initPromise }
+  return { items, sortedItems, remaining, total, headingText, add, toggle, remove, clearDone, edit, setPriority, setNote, getTodosByListId, _initPromise }
 })
