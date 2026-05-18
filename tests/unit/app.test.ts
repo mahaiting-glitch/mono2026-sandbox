@@ -49,4 +49,13 @@ describe('App · milestone footer', () => {
     expect(footer.text()).toContain('当前阶段：')
     expect(footer.text()).toContain('数据持久化')
   })
+
+  it('footer 渲染版本号和 commit sha', () => {
+    const wrapper = mount(App, {
+      global: { plugins: [createPinia()] },
+    })
+    const versionFooter = wrapper.find('[data-testid="app-version"]')
+    expect(versionFooter.exists()).toBe(true)
+    expect(versionFooter.text()).toMatch(/^v\d+\.\d+\.\d+ · [a-f0-9]{7}$/)
+  })
 })
