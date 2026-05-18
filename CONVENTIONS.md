@@ -20,6 +20,8 @@
 
    3b、**纯 refactor PR 必须净减或持平代码行数 / 文件数**——以 `git diff --stat` 业务代码行计（不含测试与空行注释）；净增则需在 PR 描述里写明「引入的抽象未来谁会复用」，否则视为无意义分层、拒绝合入。
 
+   3c、**派生 / 排序 / 过滤数据用 `computed` 暴露**——禁在模板（`v-for` / `v-if` / 插值等任意位置）里写 `[...x].sort()` / `.filter()` / 多步链式调用等内联表达式；派生数据在 store 内用 `computed` 计算、模板只消费。命名：派生 ref 用语义形容词前缀 + 原集合名（`sortedItems` / `filteredItems` / `activeItems`）。**store `computed` 不受 2a「≥2 处复用才抽」约束**——单处使用也可写、它是状态的一部分而非可复用逻辑。❌ `v-for="item in [...store.items].sort((a,b)=>a.order-b.order)"`、`v-if="store.items.filter(i=>i.done).length>0"` → ✅ store 内 `const sortedItems = computed(() => [...items.value].sort(...))` / `const hasDone = computed(() => items.value.some(i=>i.done))`，模板只引用这些 computed。
+
 4、**Tailwind 4 CSS-first**——主题用 `@theme` 写 CSS 变量、不用 `tailwind.config.js`。组件内类名直接堆、不写额外 CSS。
 
    4a、**同一元素不同状态分支的公共类提取，避免多处同步**——当 `computed` 或 `:class` 绑定的两个状态分支共享大段重复前缀时，把公共部分提到基础字符串，再拼接差异部分。❌ 两个 branch 各自写 `'px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-700'` 和 `'px-2 py-1 rounded text-sm font-medium bg-gray-100 text-gray-400'`（改尺寸需两处同步）→ ✅ `const base = 'px-2 py-1 rounded text-sm font-medium'`，然后 `` `${base} ${isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}` ``（模板字符串、整体是一个值）。
@@ -81,6 +83,7 @@
 - ❌ 只一处用到却单独抽 `useXxx.ts`（无复用 = 无意义分层）
 - ❌ 把组件内 ≤30 行的纯函数抽到 `utils/*.ts`、只为「可测试」却无第二处复用（应直接写在 `<script setup>` 内；>30 行或需直接单测 → 兄弟文件 `TodoItem.utils.ts`，不建 `utils/` 目录）
 - ❌ `computed` 或 `:class` key 以 DOM 容器命名：`btnClass`、`btnTestid`、`{ btnActive: isActive }`（应描述语义：`toggleClass`、`actionTestid`、`{ isToggleActive: isActive }`）
+- ❌ 在模板任意位置写派生表达式：`v-for="item in [...store.items].sort(...)"` / `v-if="store.items.filter(i=>i.done).length>0"` / 插值里写 `.map().join()`（应在 store 内用 `computed` 计算、模板只消费 `sortedItems` / `filteredItems` / `hasDoneItems`）
 - ❌ Pinia options 形式 `defineStore('todo', { state: () => ({...}), actions: {...} })`
 - ❌ Pinia 按文件类型拆：`useTodoState.ts` + `useTodoGetters.ts`（无复用价值、状态来源更难追）
 - ❌ 纯 refactor PR 净增文件 / 行数却不说明「未来谁会复用」
