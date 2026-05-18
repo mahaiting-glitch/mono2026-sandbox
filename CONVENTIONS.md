@@ -12,6 +12,8 @@
 
    2d、**utils / helpers / lib 等工具目录只在 ≥2 处复用时才建**——`utils/*.ts` 单处使用的纯函数（≤30 行）直接写在组件 `<script setup>` 里，Vitest 通过 `mount(Comp)` 交互间接覆盖即可（`<script setup>` 不支持顶层 `export`、不要试图从里面导出函数）；若确需直接单测且逻辑 >30 行，把函数放到与组件同名的兄弟 `.ts` 工具文件（如 `TodoItem.utils.ts`）而非 `utils/` 目录——对应正例：`TodoItem.vue` + `TodoItem.utils.ts`（同目录、就近）（与 2a / 3a 同源：单处抽离 = 无意义分层、增加跳转负担）。
 
+   2e、**`computed` / `:class` 对象 key 命名描述语义（做什么），不描述容器位置（属于哪个 DOM 元素）**——名字应回答「这个值是什么」，不应回答「这个值挂在哪个 HTML 标签上」。❌ `btnClass`→ ✅ `toggleClass`；❌ `:class="{ btnActive: isActive }"`→ ✅ `:class="{ isToggleActive: isActive }"`（或拆成 `computed`）。语义名在组件重构时不需要改名。
+
 3、**Pinia store 用 setup 风格**——`defineStore('todo', () => {...})`、不写 options 形式。
 
    3a、**按业务域拆 store、不按 state/getters/actions 文件类型拆**——store 内的 ref / computed 直接内联（见 `stores/todo.ts` 现有范例）；除非某状态 / 派生确有跨 store 复用，不拆工厂文件（如 `useTodoState.ts` + `useTodoGetters.ts` 是无意义分层，让状态来源更难追）。多个关注点时按业务域拆 store（如 `useTodoStore` / `useFilterStore`），不是按文件类型拆。
@@ -19,6 +21,8 @@
    3b、**纯 refactor PR 必须净减或持平代码行数 / 文件数**——以 `git diff --stat` 业务代码行计（不含测试与空行注释）；净增则需在 PR 描述里写明「引入的抽象未来谁会复用」，否则视为无意义分层、拒绝合入。
 
 4、**Tailwind 4 CSS-first**——主题用 `@theme` 写 CSS 变量、不用 `tailwind.config.js`。组件内类名直接堆、不写额外 CSS。
+
+   4a、**同一元素不同状态分支的公共类提取，避免多处同步**——当 `computed` 或 `:class` 绑定的两个状态分支共享大段重复前缀时，把公共部分提到基础字符串，再拼接差异部分。❌ 两个 branch 各自写 `'px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-700'` 和 `'px-2 py-1 rounded text-sm font-medium bg-gray-100 text-gray-400'`（改尺寸需两处同步）→ ✅ `const base = 'px-2 py-1 rounded text-sm font-medium'`，然后 `` `${base} ${isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}` ``（模板字符串、整体是一个值）。
 
 5、**默认无注释**——命名足够好就别写注释；非平凡的「为什么」（约束 / 不变量 / workaround）才写、且一行讲完。
 
@@ -50,13 +54,15 @@
 - ❌ boolean prop 不用 is/has/can 前缀：`completed`、`error`（应为 `isCompleted`、`hasError`）
 - ❌ emits 用字符串数组：`defineEmits(['toggle', 'delete'])`（应用类型签名 `defineEmits<{ toggle: []; delete: [id: string] }>()`）
 - ❌ Options API `export default { data() { return {...} } }`
-- ❌ Pinia options 形式 `defineStore('todo', { state: () => ({...}), actions: {...} })`
 - ❌ 只一处用到却单独抽 `useXxx.ts`（无复用 = 无意义分层）
 - ❌ 把组件内 ≤30 行的纯函数抽到 `utils/*.ts`、只为「可测试」却无第二处复用（应直接写在 `<script setup>` 内；>30 行或需直接单测 → 兄弟文件 `TodoItem.utils.ts`，不建 `utils/` 目录）
+- ❌ `computed` 或 `:class` key 以 DOM 容器命名：`btnClass`、`btnTestid`、`{ btnActive: isActive }`（应描述语义：`toggleClass`、`actionTestid`、`{ isToggleActive: isActive }`）
+- ❌ Pinia options 形式 `defineStore('todo', { state: () => ({...}), actions: {...} })`
 - ❌ Pinia 按文件类型拆：`useTodoState.ts` + `useTodoGetters.ts`（无复用价值、状态来源更难追）
 - ❌ 纯 refactor PR 净增文件 / 行数却不说明「未来谁会复用」
 - ❌ 一 PR 改 500 行跨 5 个 feature
 - ❌ 写 `tailwind.config.js`
+- ❌ 两个状态分支各自重复写大段公共 Tailwind 类，改间距时需同步两处（应提取公共前缀到 `base` 变量 + 模板字符串拼接差异部分）
 - ❌ 注释解释「这里干嘛」（命名要够好）
 - ❌ `types.ts` 手写 `type ViewType = 'list' | 'kanban' | 'calendar'`，同时 `tabs.ts` 单独维护同一组值（双写漂移）
 - ❌ 常量文件只 export 数据、消费方绕去 `types.ts` 取同名类型（非 co-locate）
