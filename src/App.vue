@@ -91,6 +91,7 @@ function cancelEdit() {
         type="text"
         ref="todoInputRef"
         placeholder="加点啥"
+        aria-label="新待办事项"
         class="flex-1 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--color-brand)"
         data-testid="todo-input"
       />
@@ -98,6 +99,7 @@ function cancelEdit() {
         type="submit"
         class="rounded bg-(--color-brand) px-4 py-2 text-white hover:bg-(--color-brand-hover) disabled:opacity-50"
         :disabled="!input.trim()"
+        aria-label="添加待办"
         data-testid="todo-add"
       >
         加
@@ -119,7 +121,7 @@ function cancelEdit() {
         />
         <span
           v-if="editingId !== todo.id"
-          :class="{ 'line-through text-slate-400': todo.done }"
+          :class="{ 'line-through text-slate-500': todo.done }"
           class="flex-1 cursor-text"
           data-testid="todo-title"
           @dblclick="startEdit(todo.id, todo.title)"
@@ -129,6 +131,7 @@ function cancelEdit() {
           :ref="(el) => { editInputRefs[todo.id] = el as HTMLInputElement | null }"
           v-model="editingTitle"
           type="text"
+          :aria-label="'编辑：' + todo.title"
           class="flex-1 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-(--color-brand)"
           data-testid="todo-edit-input"
           @blur="saveEdit"
@@ -138,7 +141,8 @@ function cancelEdit() {
         <button
           type="button"
           @click="store.remove(todo.id)"
-          class="text-sm text-slate-400 hover:text-red-600"
+          :aria-label="'删除：' + todo.title"
+          class="text-sm text-slate-500 hover:text-red-600"
           data-testid="todo-remove"
         >
           删
@@ -146,7 +150,16 @@ function cancelEdit() {
       </li>
     </ul>
 
-    <p v-if="store.total === 0" class="mt-8 text-center text-slate-400" data-testid="empty">
+    <!-- 常驻 live region：v-else 内的元素首次挂载时 aria-live 可能漏报；单独放这里保证始终存在 -->
+    <span
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      class="sr-only"
+      data-testid="remaining-live"
+    >{{ store.total > 0 ? `还剩 ${store.remaining} / ${store.total}` : '' }}</span>
+
+    <p v-if="store.total === 0" class="mt-8 text-center text-slate-500" data-testid="empty">
       还没活儿、加一个试试
     </p>
 
@@ -174,7 +187,7 @@ function cancelEdit() {
       </select>
     </div>
 
-    <div class="mt-8 text-center text-xs text-slate-400" data-testid="milestone-footer">
+    <div class="mt-8 text-center text-xs text-slate-500" data-testid="milestone-footer">
       当前阶段：{{ MILESTONE }}
     </div>
   </main>
