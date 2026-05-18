@@ -86,6 +86,42 @@ describe('useTodoStore', () => {
     expect(s.items[0]!.priority).toBe('normal')
   })
 
+  describe('sortedItems', () => {
+    it('未完成排在已完成前', async () => {
+      const s = useTodoStore()
+      await s._initPromise
+      s.add('A')
+      s.add('B')
+      s.toggle(s.items[0]!.id) // A done
+      expect(s.sortedItems[0]!.title).toBe('B')
+      expect(s.sortedItems[1]!.title).toBe('A')
+    })
+
+    it('同为未完成时 high → normal → low', async () => {
+      const s = useTodoStore()
+      await s._initPromise
+      s.add('低', 'low')
+      s.add('高', 'high')
+      s.add('普', 'normal')
+      expect(s.sortedItems.map(t => t.priority)).toEqual(['high', 'normal', 'low'])
+    })
+
+    it('不改变 items 原始顺序（非破坏性排序）', async () => {
+      const s = useTodoStore()
+      await s._initPromise
+      s.add('低', 'low')
+      s.add('高', 'high')
+      expect(s.items[0]!.priority).toBe('low')
+      expect(s.sortedItems[0]!.priority).toBe('high')
+    })
+
+    it('空数组返回空数组', async () => {
+      const s = useTodoStore()
+      await s._initPromise
+      expect(s.sortedItems).toEqual([])
+    })
+  })
+
   it('headingText · 0 todo 显示 Todo', async () => {
     const s = useTodoStore()
     await s._initPromise
