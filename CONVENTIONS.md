@@ -26,6 +26,8 @@
 
    3d、**`computed` 依赖组件 `props` 时在组件内写、不传 props 入 store**——派生值依赖 `props` 时，在组件 `<script setup>` 内直接写 `computed(() => props.xxx)`，不把 `props` 注入 store state / action（store 只依赖自身 state，组件销毁后 store 不会残留脏值）。`watch(props, ...)` 触发 store mutation 同样违反此规则（如 `watch(() => props.keyword, kw => store.setFilter(kw))`）——应改为组件内 computed 或传参给 getter 函数。store 需要外部参数的派生值改用「返回 `computed` 的 getter 函数」：`const getByTag = (tag: string) => computed(() => items.value.filter(i => i.tags.includes(tag)))`，组件内用 `const result = store.getByTag(props.tag)` 赋值给局部变量后模板引用 `result`（不在模板里直接调用 `store.getByTag(props.tag)`，否则每次渲染新建 computed 实例）。❌ `store.setFilter(props.keyword)`（props 打入 store state，组件销毁后脏值残留）→ ✅ 组件内 `const filtered = computed(() => store.items.filter(i => i.name.includes(props.keyword)))`。
 
+   3e、**store action 有失败分支时返回 `T | null`、调用侧显式 null 判断**——「失败分支」指 action 内部已 catch 并希望调用侧做分支处理（若 throw 让上层 try/catch 接管则不适用本条）。action 返回类型必须是 `T | null`（不返 `boolean` / `void` / `T | undefined`）；调用侧先赋给具名变量，再用 `!== null` 显式判断，不用 `if (result)` 隐式 truthy 短路（`0` / `''` / `false` 等合法值会误判）。❌ action 签名：`async function createList(name: string): Promise<boolean>` → ✅ `async function createList(name: string): Promise<List | null>`。❌ 调用侧：`if (await store.createList(name))` → ✅ `const created = await store.createList(name); if (created !== null) { ... }`。
+
 4、**Tailwind 4 CSS-first**——主题用 `@theme` 写 CSS 变量、不用 `tailwind.config.js`。组件内类名直接堆、不写额外 CSS。
 
    4a、**同一元素不同状态分支的公共类提取，避免多处同步**——当 `computed` 或 `:class` 绑定的两个状态分支共享大段重复前缀时，把公共部分提到基础字符串，再拼接差异部分。❌ 两个 branch 各自写 `'px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-700'` 和 `'px-2 py-1 rounded text-sm font-medium bg-gray-100 text-gray-400'`（改尺寸需两处同步）→ ✅ `const base = 'px-2 py-1 rounded text-sm font-medium'`，然后 `` `${base} ${isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}` ``（模板字符串、整体是一个值）。
@@ -117,3 +119,4 @@
 - ❌ 同一 SVG path 硬编码在 ≥2 个组件模板里（改图标需多处同步，应提取为 `components/icons/IconXxx.vue`）；✅ `<IconPlus class="h-5 w-5" />`（`components/icons/IconPlus.vue` 只含 `<svg aria-hidden="true" fill="currentColor" ...>`）
 - ❌ 把组件 props 写入 store：`store.setFilter(props.keyword)`（组件销毁后 store 仍持脏值）→ ✅ 组件内 `const filtered = computed(() => store.items.filter(i => i.name.includes(props.keyword)))`
 - ❌ `watch(() => props.keyword, kw => store.setFilter(kw))`（watch 触发 store mutation，同样把组件级状态打入 store）→ ✅ 组件内 `const filtered = computed(() => store.items.filter(i => i.name.includes(props.keyword)))` 或 `const result = store.getByTag(props.tag)`（getter 函数 + 局部 const）
+- ❌ action 返回 `boolean` / `void` / `T | undefined` 表达失败（`if (result)` 对 `0` / `''` / `false` 等合法值误判）→ ✅ action 返回 `T | null`，调用侧 `const created = await store.createList(name); if (created !== null) { ... }`（显式 null 判断）
