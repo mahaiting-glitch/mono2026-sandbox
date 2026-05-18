@@ -99,6 +99,21 @@ test('行内编辑 · 只允许单行编辑', async ({ page }) => {
   await expect(page.getByTestId('todo-edit-input')).toHaveCount(1)
 })
 
+test('/ 键聚焦输入框', async ({ page }) => {
+  // 初始焦点不在输入框（点空白区域）
+  await page.locator('h1').click()
+  await page.keyboard.press('/')
+  await expect(page.getByTestId('todo-input')).toBeFocused()
+})
+
+test('/ 键焦点已在输入框时不拦截', async ({ page }) => {
+  const input = page.getByTestId('todo-input')
+  await input.click()
+  await page.keyboard.press('/')
+  // 能正常输入 /（input value 应含 /）
+  await expect(input).toHaveValue('/')
+})
+
 test('dark mode 切换 + 持久化', async ({ page }) => {
   // 强制 light 起点
   await page.evaluate(() => localStorage.setItem('mono2026-sandbox.colorScheme', 'light'))
