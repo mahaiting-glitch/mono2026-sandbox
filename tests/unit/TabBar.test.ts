@@ -17,8 +17,11 @@ describe('TabBar', () => {
     const wrapper = mount(TabBar, { props: { active: tab } })
     const activeBtn = wrapper.find(`[data-testid="tab-${tab}"]`)
     expect(activeBtn.attributes('aria-current')).toBe('page')
-    for (const other of TAB_VALUES.filter((t) => t !== tab)) {
-      expect(wrapper.find(`[data-testid="tab-${other}"]`).attributes('aria-current')).toBeUndefined()
+    const otherBtns = wrapper
+      .findAll('[data-testid^="tab-"]')
+      .filter((btn) => btn.attributes('data-testid') !== `tab-${tab}`)
+    for (const btn of otherBtns) {
+      expect(btn.attributes('aria-current')).toBeUndefined()
     }
   })
 })
