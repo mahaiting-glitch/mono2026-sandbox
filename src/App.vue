@@ -3,7 +3,18 @@ import { ref, watch, nextTick, computed, onMounted, onUnmounted } from 'vue'
 import { useTodoStore } from './stores/todo'
 import { useColorSchemeStore } from './stores/colorScheme'
 import { useColorThemeStore, type Theme } from './stores/colorTheme'
-import type { Priority } from './types'
+import type { Priority, ViewType } from './types'
+import TabBar from './components/TabBar.vue'
+
+const LS_VIEW_KEY = 'mono2026-sandbox.view'
+
+function readSavedView(): ViewType {
+  const v = localStorage.getItem(LS_VIEW_KEY)
+  return v === 'list' || v === 'kanban' || v === 'calendar' ? v : 'list'
+}
+
+const activeView = ref<ViewType>(readSavedView())
+watch(activeView, (v) => localStorage.setItem(LS_VIEW_KEY, v))
 
 const store = useTodoStore()
 const colorScheme = useColorSchemeStore()
@@ -127,9 +138,10 @@ function cancelNoteEdit() {
     @click="colorScheme.toggle()"
   >{{ colorScheme.isDark ? '☀' : '🌙' }}</button>
 
-  <main class="mx-auto max-w-xl px-4 py-12">
+  <main class="mx-auto max-w-xl px-4 py-12 pb-20">
     <h1 class="text-2xl font-semibold mb-6" data-testid="heading">{{ store.headingText }}</h1>
 
+    <template v-if="activeView === 'list'">
     <form class="flex gap-2 mb-6" @submit.prevent="submit">
       <select
         v-model="newPriority"
@@ -223,7 +235,7 @@ function cancelNoteEdit() {
             <button
               v-else
               type="button"
-              class="text-xs text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400"
+              class="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               data-testid="todo-note-add"
               @click="startNoteEdit(todo.id, todo.note)"
             >＋ 备注</button>
@@ -269,6 +281,19 @@ function cancelNoteEdit() {
         清完成
       </button>
     </footer>
+    </template>
+
+    <div
+      v-else-if="activeView === 'kanban'"
+      class="mt-8 text-center text-slate-400 dark:text-slate-500"
+      data-testid="view-kanban"
+    >看板视图（待实现）</div>
+
+    <div
+      v-else-if="activeView === 'calendar'"
+      class="mt-8 text-center text-slate-400 dark:text-slate-500"
+      data-testid="view-calendar"
+    >日历视图（待实现）</div>
 
     <div class="mt-6 flex items-center justify-end gap-2 text-sm text-slate-500">
       <label for="theme-select" class="select-none">主题</label>
@@ -286,4 +311,5 @@ function cancelNoteEdit() {
       当前阶段：{{ MILESTONE }}
     </div>
   </main>
+  <TabBar :active="activeView" @change="activeView = $event" />
 </template>
