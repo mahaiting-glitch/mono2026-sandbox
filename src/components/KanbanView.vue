@@ -2,11 +2,13 @@
 import { computed } from 'vue'
 import { useTodoStore } from '../stores/todo'
 import KanbanCard from './KanbanCard.vue'
+import { useActiveListFilter } from '../composables/useActiveListFilter'
 
 const store = useTodoStore()
+const filteredItems = useActiveListFilter(() => store.sortedItems)
 
-const pending = computed(() => store.items.filter(t => !t.done))
-const completed = computed(() => store.items.filter(t => t.done))
+const pending = computed(() => filteredItems.value.filter(t => !t.done))
+const completed = computed(() => filteredItems.value.filter(t => t.done))
 </script>
 
 <template>
