@@ -56,6 +56,8 @@
 
    6b、**Pinia store 单测共享的 storage mock 放在 `tests/unit/_helpers/` 下**——当 ≥2 个 spec 需要相同的 `idb-keyval` in-memory mock（`idbStore` 对象 + `vi.mock('idb-keyval', factory)`）或相同的 `memoryStorage()` localStorage stub 时，提取到 `tests/unit/_helpers/storage-mock.ts` 统一导出；各 spec 从 helpers 导入、本地不再重复定义。`vi.mock('idb-keyval', factory)` 仍需保留在各 spec 文件内（Vitest hoisting 要求），factory 直接引用导入的 `idbStore`。❌ 各 spec 各自 `const idbStore = {}` + 重复粘贴 `function memoryStorage()` → ✅ `import { idbStore, memoryStorage } from './_helpers/storage-mock'`。
 
+   6c、**v-for 内 `data-testid` 必须唯一（携带稳定 id）**——v-for 渲染的可交互/可断言元素 `data-testid` 必须拼接 item 稳定 id（如 `:data-testid="'list-btn-' + list.id"` 或 `` :data-testid="`list-btn-${list.id}`" ``），或改用 `getByRole({ name })` 语义定位；禁止靠 `.nth(n)` / `.first()` 顺序耦合断言（列表重排后立刻失效）。同理适用于任何 v-for 渲染的可交互/可断言元素（行、卡片、菜单项等）。❌ `<button data-testid="list-btn" v-for="list in lists">` → ✅ `<button :data-testid="'list-btn-' + list.id" v-for="list in lists">`。
+
 7、**改动范围 ≤ 200 行 / PR**——拆得越细越好、单 issue 单关注点；大改动拆里程碑。
 
 8、**Commit message 中文 + conventional 前缀**——`feat:` / `fix:` / `docs:` / `test:` / `chore:` / `refactor:`、标题 ≤ 50 字。
@@ -96,6 +98,7 @@
 - ❌ 两个状态分支各自重复写大段公共 Tailwind 类，改间距时需同步两处（应提取公共前缀到 `base` 变量 + 模板字符串拼接差异部分）
 - ❌ ≥2 个 spec 写了**完全相同**的前置逻辑（如 IDB 清理 + reload）却各自重复 `beforeEach`，而不是提取到 `tests/e2e/fixtures.ts`（`base.extend` fixture）
 - ❌ 多个单测 spec 各自 `const idbStore = {}` + 重复粘贴 `function memoryStorage()`（应提取到 `tests/unit/_helpers/storage-mock.ts`，各 spec 从 helpers 导入）
+- ❌ v-for 内 `data-testid="list-btn"`（多个相同 testid，e2e 定位不稳定，重排后 `.nth(n)` 断言立刻失效）
 - ❌ 注释解释「这里干嘛」（命名要够好）
 - ❌ `types.ts` 手写 `type ViewType = 'list' | 'kanban' | 'calendar'`，同时 `tabs.ts` 单独维护同一组值（双写漂移）
 - ❌ 常量文件只 export 数据、消费方绕去 `types.ts` 取同名类型（非 co-locate）
