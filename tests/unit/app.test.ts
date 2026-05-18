@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
+import { nextTick } from 'vue'
 import App from '../../src/App.vue'
 
 const idbStore: Record<string, unknown> = {}
@@ -30,6 +31,59 @@ function stubMatchMedia(matches = false) {
     removeEventListener: vi.fn(),
   })))
 }
+
+describe('App · hello world command', () => {
+  let wrapper: ReturnType<typeof mount>
+
+  beforeEach(() => {
+    vi.stubGlobal('localStorage', memoryStorage())
+    for (const k of Object.keys(idbStore)) delete idbStore[k]
+    document.documentElement.className = ''
+    document.documentElement.removeAttribute('data-theme')
+    stubMatchMedia(false)
+    vi.useFakeTimers()
+    wrapper = mount(App, {
+      global: { plugins: [createPinia()] },
+      attachTo: document.body,
+    })
+  })
+
+  afterEach(() => {
+    wrapper.unmount()
+    vi.useRealTimers()
+  })
+
+  it('h 键触发 hello banner 显示', async () => {
+    expect(wrapper.find('[data-testid="hello-banner"]').exists()).toBe(false)
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'h' }))
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="hello-banner"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="hello-banner"]').text()).toBe('Hello, World!')
+  })
+
+  it('h 键在输入框聚焦时不触发 banner', async () => {
+    const input = wrapper.find('[data-testid="todo-input"]').element as HTMLInputElement
+    input.focus()
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'h' }))
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="hello-banner"]').exists()).toBe(false)
+  })
+
+  it('hello banner 2s 后自动消失', async () => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'h' }))
+    await nextTick()
+    expect(wrapper.find('[data-testid="hello-banner"]').exists()).toBe(true)
+
+    vi.advanceTimersByTime(2000)
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="hello-banner"]').exists()).toBe(false)
+  })
+})
 
 describe('App · milestone footer', () => {
   beforeEach(() => {

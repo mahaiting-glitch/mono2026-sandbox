@@ -46,17 +46,42 @@ const noteEditingId = ref<string | null>(null)
 const noteEditingText = ref('')
 const noteInputRefs = ref<Record<string, HTMLInputElement | null>>({})
 const todoInputRef = ref<HTMLInputElement | null>(null)
+const helloVisible = ref(false)
+const helloTimer = ref<ReturnType<typeof setTimeout> | null>(null)
+
+function isInputFocused(): boolean {
+  const el = document.activeElement
+  return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement
+}
+
+function showHello() {
+  helloVisible.value = true
+  if (helloTimer.value) clearTimeout(helloTimer.value)
+  helloTimer.value = setTimeout(() => {
+    helloVisible.value = false
+    helloTimer.value = null
+  }, 2000)
+}
 
 function onKeydown(e: KeyboardEvent) {
-  if (e.key !== '/') return
-  if (!todoInputRef.value) return  // todoInputRef 挂在 v-if="list" 内，非列表视图时卸载 = null
-  if (document.activeElement === todoInputRef.value) return
-  e.preventDefault()
-  todoInputRef.value.focus()
+  if (e.key === '/') {
+    if (!todoInputRef.value) return
+    if (document.activeElement === todoInputRef.value) return
+    e.preventDefault()
+    todoInputRef.value.focus()
+    return
+  }
+  if (e.key === 'h' && !isInputFocused()) {
+    e.preventDefault()
+    showHello()
+  }
 }
 
 onMounted(() => document.addEventListener('keydown', onKeydown))
-onUnmounted(() => document.removeEventListener('keydown', onKeydown))
+onUnmounted(() => {
+  document.removeEventListener('keydown', onKeydown)
+  if (helloTimer.value) clearTimeout(helloTimer.value)
+})
 
 // e2e crash hook: set window.__crash__ = true before navigation to trigger ErrorBoundary
 onMounted(() => {
@@ -316,4 +341,18 @@ function cancelNoteEdit() {
     </footer>
   </main>
   <TabBar :active="activeView" @change="activeView = $event" />
+  <Transition
+    enter-active-class="transition-opacity duration-200 ease-in-out"
+    leave-active-class="transition-opacity duration-200 ease-in-out"
+    enter-from-class="opacity-0"
+    leave-to-class="opacity-0"
+  >
+    <div
+      v-if="helloVisible"
+      data-testid="hello-banner"
+      role="status"
+      aria-live="polite"
+      class="fixed top-20 left-1/2 -translate-x-1/2 rounded-xl bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-6 py-3 text-lg font-semibold shadow-lg pointer-events-none select-none whitespace-nowrap z-50"
+    >Hello, World!</div>
+  </Transition>
 </template>
