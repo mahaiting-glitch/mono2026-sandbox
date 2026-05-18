@@ -60,6 +60,8 @@
 
    6c、**v-for 内 `data-testid` 必须唯一（携带稳定 id）**——v-for 渲染的可交互/可断言元素 `data-testid` 必须拼接 item 稳定 id（如 `:data-testid="'list-btn-' + list.id"` 或 `` :data-testid="`list-btn-${list.id}`" ``），或改用 `getByRole({ name })` 语义定位；禁止靠 `.nth(n)` / `.first()` 顺序耦合断言（列表重排后立刻失效）。同理适用于任何 v-for 渲染的可交互/可断言元素（行、卡片、菜单项等）。❌ `<button data-testid="list-btn" v-for="list in lists">` → ✅ `<button :data-testid="'list-btn-' + list.id" v-for="list in lists">`。
 
+   6d、**Playwright 选择器优先级：`getByRole` > stable testid > `getByText` > CSS selector；禁 xpath / `.nth()`**——选取交互元素时按优先级从高到低：①`getByRole('button', { name: '保存' })` / `getByLabel` / `getByPlaceholder`（语义定位、与 a11y 对齐、重构不失效）；②`getByTestId('save-btn')`（`data-testid` 携带稳定 id、见 6c）；③`getByText('保存')`（文本定位、文案变更即失效、慎用）；④CSS selector（`page.locator('.save-btn')`，最后兜底）。禁止用 xpath（`page.locator('//button[1]')`）——DOM 结构变化即失效；禁止用 `.nth(n)` 顺序定位可交互元素（列表重排后立刻失效，6c 的稳定 testid 就是为替代它而存在）。❌ `page.locator('button').nth(0).click()` / `page.locator('//form/button[2]')` → ✅ `page.getByRole('button', { name: '新建列表' }).click()` / `page.getByTestId('list-btn-abc123').click()`。
+
 7、**改动范围 ≤ 200 行 / PR**——拆得越细越好、单 issue 单关注点；大改动拆里程碑。
 
 8、**Commit message 中文 + conventional 前缀**——`feat:` / `fix:` / `docs:` / `test:` / `chore:` / `refactor:`、标题 ≤ 50 字。
@@ -103,6 +105,8 @@
 - ❌ `v-for` 用 `:key="index"`（动态列表重排 / 插入 / 删除时 DOM 复用错乱，应用稳定业务 id `:key="item.id"`；静态列表例外，需加注释说明）
 
 - ❌ v-for 内 `data-testid="list-btn"`（多个相同 testid，e2e 定位不稳定，重排后 `.nth(n)` 断言立刻失效）
+- ❌（6d）靠 `.nth(n)` / `.first()` 定位可交互元素（列表重排后立刻失效，应用稳定 testid 或 `getByRole`）
+- ❌（6d）靠 xpath 定位可交互元素（`page.locator('//form/button[2]')`，结构变化即失效，应用语义/testid 选择器）
 - ❌ 注释解释「这里干嘛」（命名要够好）
 - ❌ `types.ts` 手写 `type ViewType = 'list' | 'kanban' | 'calendar'`，同时 `tabs.ts` 单独维护同一组值（双写漂移）
 - ❌ 常量文件只 export 数据、消费方绕去 `types.ts` 取同名类型（非 co-locate）
