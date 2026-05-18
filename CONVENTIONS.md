@@ -6,6 +6,10 @@
 
 3、**Pinia store 用 setup 风格**——`defineStore('todo', () => {...})`、不写 options 形式。
 
+   3a、**按业务域拆 store、不按 state/getters/actions 文件类型拆**——store 内的 ref / computed 直接内联（见 `stores/todo.ts` 现有范例）；除非某状态 / 派生确有跨 store 复用，不拆工厂文件（如 `useTodoState.ts` + `useTodoGetters.ts` 是无意义分层，让状态来源更难追）。多个关注点时按业务域拆 store（如 `useTodoStore` / `useFilterStore`），不是按文件类型拆。
+
+   3b、**纯 refactor PR 必须净减或持平代码行数 / 文件数**——以 `git diff --stat` 业务代码行计（不含测试与空行注释）；净增则需在 PR 描述里写明「引入的抽象未来谁会复用」，否则视为无意义分层、拒绝合入。
+
 4、**Tailwind 4 CSS-first**——主题用 `@theme` 写 CSS 变量、不用 `tailwind.config.js`。组件内类名直接堆、不写额外 CSS。
 
 5、**默认无注释**——命名足够好就别写注释；非平凡的「为什么」（约束 / 不变量 / workaround）才写、且一行讲完。
@@ -20,6 +24,8 @@
 
 - ❌ Options API `export default { data() { return {...} } }`
 - ❌ Pinia options 形式 `defineStore('todo', { state: () => ({...}), actions: {...} })`
+- ❌ Pinia 按文件类型拆：`useTodoState.ts` + `useTodoGetters.ts`（无复用价值、状态来源更难追）
+- ❌ 纯 refactor PR 净增文件 / 行数却不说明「未来谁会复用」
 - ❌ 一 PR 改 500 行跨 5 个 feature
 - ❌ 写 `tailwind.config.js`
 - ❌ 注释解释「这里干嘛」（命名要够好）
