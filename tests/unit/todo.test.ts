@@ -150,6 +150,43 @@ describe('useTodoStore', () => {
     expect(s.items[0]!.title).toBe('旧标题')
   })
 
+  it('setNote · 添加备注', async () => {
+    const s = useTodoStore()
+    await s._initPromise
+    s.add('任务')
+    const id = s.items[0]!.id
+    s.setNote(id, '这是备注')
+    expect(s.items[0]!.note).toBe('这是备注')
+  })
+
+  it('setNote · 清空备注（空字符串 → 删字段）', async () => {
+    const s = useTodoStore()
+    await s._initPromise
+    s.add('任务')
+    const id = s.items[0]!.id
+    s.setNote(id, '旧备注')
+    expect(s.items[0]!.note).toBe('旧备注')
+    s.setNote(id, '')
+    expect(s.items[0]!.note).toBeUndefined()
+  })
+
+  it('setNote · trim 后写入', async () => {
+    const s = useTodoStore()
+    await s._initPromise
+    s.add('任务')
+    const id = s.items[0]!.id
+    s.setNote(id, '  前后空格  ')
+    expect(s.items[0]!.note).toBe('前后空格')
+  })
+
+  it('setNote · 不存在的 id 无副作用', async () => {
+    const s = useTodoStore()
+    await s._initPromise
+    s.add('任务')
+    s.setNote('not-exist', '备注')
+    expect(s.items[0]!.note).toBeUndefined()
+  })
+
   it('IDB 损坏·非数组 → 回退 []', async () => {
     idbStore['todos'] = { foo: 1 }
     const s = useTodoStore()
