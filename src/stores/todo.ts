@@ -1,34 +1,20 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import type { Todo } from '../types'
-
-const STORAGE_KEY = 'mono2026-sandbox.todos'
-
-function isTodo(v: unknown): v is Todo {
-  if (typeof v !== 'object' || v === null) return false
-  const r = v as Record<string, unknown>
-  return (
-    typeof r.id === 'string' &&
-    typeof r.title === 'string' &&
-    typeof r.done === 'boolean' &&
-    typeof r.createdAt === 'number'
-  )
-}
-
-function load(): Todo[] {
-  const raw = localStorage.getItem(STORAGE_KEY)
-  if (!raw) return []
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed) || !parsed.every(isTodo)) return []
-    return parsed
-  } catch {
-    return []
-  }
-}
+import { useTodoStorage } from '../composables/useTodoStorage'
 
 export const useTodoStore = defineStore('todo', () => {
-  const items = ref<Todo[]>(load())
+  const items = ref<Todo[]>([])
+  const storage = useTodoStorage()
+
+  let initialized = false
+
+  const _initPromise = storage.migrate()
+    .then(() => storage.read())
+    .then(saved => {
+      items.value = saved
+      initialized = true
+    })
 
   const remaining = computed(() => items.value.filter(t => !t.done).length)
   const total = computed(() => items.value.length)
@@ -66,7 +52,7 @@ export const useTodoStore = defineStore('todo', () => {
     if (t && trimmed) t.title = trimmed
   }
 
-  watch(items, v => localStorage.setItem(STORAGE_KEY, JSON.stringify(v)), { deep: true })
+  watch(items, v => { if (initialized) void storage.write(v) }, { deep: true })
 
-  return { items, remaining, total, headingText, add, toggle, remove, clearDone, edit }
+  return { items, remaining, total, headingText, add, toggle, remove, clearDone, edit, _initPromise }
 })
