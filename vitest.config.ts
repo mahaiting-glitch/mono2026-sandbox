@@ -1,12 +1,10 @@
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
-import { MILESTONE } from './milestone'
+import { defines } from './build-info'
 
 export default defineConfig({
   plugins: [vue()],
-  define: {
-    __MILESTONE__: JSON.stringify(MILESTONE),
-  },
+  define: defines,
   test: {
     environment: 'happy-dom',
     include: ['tests/unit/**/*.test.ts'],

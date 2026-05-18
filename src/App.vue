@@ -22,6 +22,8 @@ const store = useTodoStore()
 const colorScheme = useColorSchemeStore()
 const colorTheme = useColorThemeStore()
 const MILESTONE = __MILESTONE__
+const APP_VERSION = __APP_VERSION__
+const GIT_COMMIT = __GIT_COMMIT__
 
 const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: 'default', label: '默认' },
@@ -314,6 +316,7 @@ function cancelNoteEdit() {
     <div class="mt-8 text-center text-xs text-slate-500" data-testid="milestone-footer">
       当前阶段：{{ MILESTONE }}
     </div>
+    <div class="mt-1 text-center text-xs text-slate-500" data-testid="app-version">v{{ APP_VERSION }} · {{ GIT_COMMIT }}</div>
   </main>
   <TabBar :active="activeView" @change="activeView = $event" />
 </template>
