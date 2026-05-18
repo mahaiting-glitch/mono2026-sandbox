@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useTodoStorage } from '../../src/composables/useTodoStorage'
+import { idbStore, clearIdbStore, memoryStorage } from './_helpers/storage-mock'
 
-const idbStore: Record<string, unknown> = {}
 vi.mock('idb-keyval', () => ({
   get: async (key: string) => idbStore[key],
   set: async (key: string, value: unknown) => { idbStore[key] = value },
@@ -10,12 +10,8 @@ vi.mock('idb-keyval', () => ({
 
 describe('useTodoStorage · schema version', () => {
   beforeEach(() => {
-    for (const k of Object.keys(idbStore)) delete idbStore[k]
-    vi.stubGlobal('localStorage', {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-    })
+    clearIdbStore()
+    vi.stubGlobal('localStorage', memoryStorage())
   })
 
   it('write 存入 __schema_version: 1', async () => {

@@ -2,30 +2,18 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useListsStore } from '../../src/stores/lists'
 import { useTodoStore } from '../../src/stores/todo'
+import { idbStore, clearIdbStore, memoryStorage } from './_helpers/storage-mock'
 
-const idbStore: Record<string, unknown> = {}
 vi.mock('idb-keyval', () => ({
   get: async (key: string) => idbStore[key],
   set: async (key: string, value: unknown) => { idbStore[key] = value },
   del: async (key: string) => { delete idbStore[key] },
 }))
 
-function memoryStorage() {
-  const store: Record<string, string> = {}
-  return {
-    getItem: (k: string) => store[k] ?? null,
-    setItem: (k: string, v: string) => { store[k] = v },
-    removeItem: (k: string) => { delete store[k] },
-    clear: () => { for (const k of Object.keys(store)) delete store[k] },
-    key: (i: number) => Object.keys(store)[i] ?? null,
-    get length() { return Object.keys(store).length },
-  }
-}
-
 describe('useListsStore', () => {
   beforeEach(() => {
     vi.stubGlobal('localStorage', memoryStorage())
-    for (const k of Object.keys(idbStore)) delete idbStore[k]
+    clearIdbStore()
     setActivePinia(createPinia())
   })
 
@@ -110,7 +98,7 @@ describe('useListsStore', () => {
 describe('useTodoStore.getTodosByListId', () => {
   beforeEach(() => {
     vi.stubGlobal('localStorage', memoryStorage())
-    for (const k of Object.keys(idbStore)) delete idbStore[k]
+    clearIdbStore()
     setActivePinia(createPinia())
   })
 
