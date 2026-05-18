@@ -33,6 +33,9 @@ const newPriority = ref<Priority>('normal')
 const editingId = ref<string | null>(null)
 const editingTitle = ref('')
 const editInputRefs = ref<Record<string, HTMLInputElement | null>>({})
+const noteEditingId = ref<string | null>(null)
+const noteEditingText = ref('')
+const noteInputRefs = ref<Record<string, HTMLInputElement | null>>({})
 const todoInputRef = ref<HTMLInputElement | null>(null)
 
 function onKeydown(e: KeyboardEvent) {
@@ -56,6 +59,15 @@ watch(editingId, (id) => {
   if (!id) return
   nextTick(() => {
     const el = editInputRefs.value[id]
+    el?.focus()
+    el?.select()
+  })
+})
+
+watch(noteEditingId, (id) => {
+  if (!id) return
+  nextTick(() => {
+    const el = noteInputRefs.value[id]
     el?.focus()
     el?.select()
   })
@@ -87,6 +99,22 @@ function saveEdit() {
 
 function cancelEdit() {
   editingId.value = null
+}
+
+function startNoteEdit(id: string, currentNote: string | undefined) {
+  noteEditingId.value = id
+  noteEditingText.value = currentNote ?? ''
+}
+
+function saveNote() {
+  const id = noteEditingId.value
+  if (!id) return
+  store.setNote(id, noteEditingText.value)
+  noteEditingId.value = null
+}
+
+function cancelNoteEdit() {
+  noteEditingId.value = null
 }
 </script>
 
@@ -137,51 +165,83 @@ function cancelEdit() {
       <li
         v-for="todo in store.items"
         :key="todo.id"
-        class="flex items-center gap-3 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2"
+        class="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2"
       >
-        <input
-          type="checkbox"
-          :checked="todo.done"
-          :aria-label="'标记完成：' + todo.title"
-          @change="store.toggle(todo.id)"
-          class="h-4 w-4"
-        />
-        <button
-          type="button"
-          :aria-label="'优先级：' + todo.priority"
-          :data-priority="todo.priority"
-          data-testid="todo-priority"
-          class="text-base leading-none hover:scale-110 transition-transform"
-          @click="cyclePriority(todo.id, todo.priority)"
-        >{{ PRIORITY_EMOJI[todo.priority] }}</button>
-        <span
-          v-if="editingId !== todo.id"
-          :class="{ 'line-through text-slate-500': todo.done }"
-          class="flex-1 cursor-text"
-          data-testid="todo-title"
-          @dblclick="startEdit(todo.id, todo.title)"
-        >{{ todo.title }}</span>
-        <input
-          v-else
-          :ref="(el) => { editInputRefs[todo.id] = el as HTMLInputElement | null }"
-          v-model="editingTitle"
-          type="text"
-          :aria-label="'编辑：' + todo.title"
-          class="flex-1 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-(--color-brand)"
-          data-testid="todo-edit-input"
-          @blur="saveEdit"
-          @keydown.enter.prevent="saveEdit"
-          @keydown.esc="cancelEdit"
-        />
-        <button
-          type="button"
-          @click="store.remove(todo.id)"
-          :aria-label="'删除：' + todo.title"
-          class="text-sm text-slate-500 hover:text-red-600"
-          data-testid="todo-remove"
-        >
-          删
-        </button>
+        <div class="flex items-center gap-3">
+          <input
+            type="checkbox"
+            :checked="todo.done"
+            :aria-label="'标记完成：' + todo.title"
+            @change="store.toggle(todo.id)"
+            class="h-4 w-4"
+          />
+          <button
+            type="button"
+            :aria-label="'优先级：' + todo.priority"
+            :data-priority="todo.priority"
+            data-testid="todo-priority"
+            class="text-base leading-none hover:scale-110 transition-transform"
+            @click="cyclePriority(todo.id, todo.priority)"
+          >{{ PRIORITY_EMOJI[todo.priority] }}</button>
+          <span
+            v-if="editingId !== todo.id"
+            :class="{ 'line-through text-slate-500': todo.done }"
+            class="flex-1 cursor-text"
+            data-testid="todo-title"
+            @dblclick="startEdit(todo.id, todo.title)"
+          >{{ todo.title }}</span>
+          <input
+            v-else
+            :ref="(el) => { editInputRefs[todo.id] = el as HTMLInputElement | null }"
+            v-model="editingTitle"
+            type="text"
+            :aria-label="'编辑：' + todo.title"
+            class="flex-1 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-(--color-brand)"
+            data-testid="todo-edit-input"
+            @blur="saveEdit"
+            @keydown.enter.prevent="saveEdit"
+            @keydown.esc="cancelEdit"
+          />
+          <button
+            type="button"
+            @click="store.remove(todo.id)"
+            :aria-label="'删除：' + todo.title"
+            class="text-sm text-slate-500 hover:text-red-600"
+            data-testid="todo-remove"
+          >
+            删
+          </button>
+        </div>
+        <div class="mt-1 ml-8">
+          <template v-if="noteEditingId !== todo.id">
+            <span
+              v-if="todo.note"
+              class="text-xs text-slate-400 dark:text-slate-500 cursor-text"
+              data-testid="todo-note"
+              @dblclick="startNoteEdit(todo.id, todo.note)"
+            >{{ todo.note }}</span>
+            <button
+              v-else
+              type="button"
+              class="text-xs text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400"
+              data-testid="todo-note-add"
+              @click="startNoteEdit(todo.id, todo.note)"
+            >＋ 备注</button>
+          </template>
+          <input
+            v-else
+            :ref="(el) => { noteInputRefs[todo.id] = el as HTMLInputElement | null }"
+            v-model="noteEditingText"
+            type="text"
+            placeholder="添加备注…"
+            aria-label="编辑备注"
+            class="w-full text-xs rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder:text-slate-400 px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-(--color-brand)"
+            data-testid="todo-note-input"
+            @blur="saveNote"
+            @keydown.enter.prevent="saveNote"
+            @keydown.esc="cancelNoteEdit"
+          />
+        </div>
       </li>
     </ul>
 

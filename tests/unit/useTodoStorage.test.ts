@@ -25,6 +25,24 @@ describe('useTodoStorage · schema version', () => {
     expect(idbStore['todos']).toEqual({ __schema_version: 1, items: [todo] })
   })
 
+  it('write + read · note 字段正确持久化', async () => {
+    const storage = useTodoStorage()
+    const todo = { id: '1', title: 'test', done: false, createdAt: 100, priority: 'normal' as const, note: '这是备注' }
+    await storage.write([todo])
+    const todos = await storage.read()
+    expect(todos[0]!.note).toBe('这是备注')
+  })
+
+  it('read · 旧数据无 note 字段 → note 为 undefined', async () => {
+    const storage = useTodoStorage()
+    idbStore['todos'] = {
+      __schema_version: 1,
+      items: [{ id: '1', title: 'old', done: false, createdAt: 100, priority: 'normal' }],
+    }
+    const todos = await storage.read()
+    expect(todos[0]!.note).toBeUndefined()
+  })
+
   it('read · 含 __schema_version 字段 → 不动、正常返回 items', async () => {
     const storage = useTodoStorage()
     idbStore['todos'] = {

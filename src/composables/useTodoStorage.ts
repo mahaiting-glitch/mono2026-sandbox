@@ -7,7 +7,7 @@ const SCHEMA_VERSION = 1
 
 const VALID_PRIORITIES = new Set<string>(['high', 'normal', 'low'])
 
-// Accepts old todos without priority (for migration compatibility)
+// Accepts old todos without priority/note (for migration compatibility)
 function isTodoLike(v: unknown): v is Record<string, unknown> {
   if (typeof v !== 'object' || v === null) return false
   const r = v as Record<string, unknown>
@@ -16,18 +16,24 @@ function isTodoLike(v: unknown): v is Record<string, unknown> {
     typeof r.title === 'string' &&
     typeof r.done === 'boolean' &&
     typeof r.createdAt === 'number' &&
-    (r.priority === undefined || (typeof r.priority === 'string' && VALID_PRIORITIES.has(r.priority)))
+    (r.priority === undefined || (typeof r.priority === 'string' && VALID_PRIORITIES.has(r.priority))) &&
+    (r.note === undefined || typeof r.note === 'string')
   )
 }
 
 function normalizeTodo(r: Record<string, unknown>): Todo {
-  return {
+  const todo: Todo = {
     id: r.id as string,
     title: r.title as string,
     done: r.done as boolean,
     createdAt: r.createdAt as number,
     priority: (r.priority as Priority | undefined) ?? 'normal',
   }
+  // exactOptionalPropertyTypes: only set note when it's a string, never assign undefined
+  if (typeof r.note === 'string') {
+    todo.note = r.note
+  }
+  return todo
 }
 
 interface StoredTodos {

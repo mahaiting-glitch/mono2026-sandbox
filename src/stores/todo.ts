@@ -58,7 +58,18 @@ export const useTodoStore = defineStore('todo', () => {
     if (t && trimmed) t.title = trimmed
   }
 
+  function setNote(id: string, note: string) {
+    const t = items.value.find(t => t.id === id)
+    if (!t) return
+    const trimmed = note.trim()
+    if (trimmed) {
+      t.note = trimmed
+    } else {
+      delete t.note
+    }
+  }
+
   watch(items, v => { if (initialized) void storage.write(v) }, { deep: true })
 
-  return { items, remaining, total, headingText, add, toggle, remove, clearDone, edit, setPriority, _initPromise }
+  return { items, remaining, total, headingText, add, toggle, remove, clearDone, edit, setPriority, setNote, _initPromise }
 })
