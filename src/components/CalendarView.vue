@@ -1,35 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTodoStore } from '../stores/todo'
-import type { Todo } from '../types'
 import { PRIORITY_EMOJI } from '../constants/priority'
+import { groupTodosByDay } from '../utils/calendar'
 
 const store = useTodoStore()
 
-function toDayStart(ts: number): number {
-  const d = new Date(ts)
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-}
-
-function formatDay(dayStart: number): string {
-  return new Date(dayStart).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
-}
-
-const groupedByDay = computed(() => {
-  const map = new Map<number, { label: string; todos: Todo[] }>()
-  for (const todo of store.items) {
-    const dayStart = toDayStart(todo.createdAt)
-    const existing = map.get(dayStart)
-    if (existing) {
-      existing.todos.push(todo)
-    } else {
-      map.set(dayStart, { label: formatDay(dayStart), todos: [todo] })
-    }
-  }
-  return [...map.entries()]
-    .sort((a, b) => b[0] - a[0])
-    .map(([, group]) => group)
-})
+const groupedByDay = computed(() => groupTodosByDay(store.items))
 </script>
 
 <template>
