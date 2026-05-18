@@ -14,6 +14,8 @@
 
    2e、**`computed` / `:class` 对象 key 命名描述语义（做什么），不描述容器位置（属于哪个 DOM 元素）**——名字应回答「这个值是什么」，不应回答「这个值挂在哪个 HTML 标签上」。❌ `btnClass`→ ✅ `toggleClass`；❌ `:class="{ btnActive: isActive }"`→ ✅ `:class="{ isToggleActive: isActive }"`（或拆成 `computed`）。语义名在组件重构时不需要改名。
 
+   2f、**`v-for` 必须 `:key` 稳定业务 id、禁 `:key="index"`**——`v-for` 渲染的每个元素必须绑定稳定唯一 id（如 `:key="item.id"`）；禁止用数组下标 `:key="index"`（列表重排 / 插入 / 删除时 Vue 会复用错误 DOM 节点，导致状态混乱、动画异常）。❌ `<li v-for="(item, index) in items" :key="index">` → ✅ `<li v-for="item in items" :key="item.id">`。若元素为原始值（如 `string[]`），用值本身作 key（`:key="item"`），前提是列表内值唯一；若值可能重复，先补 `id` 字段再渲染。若列表在整个生命周期内保证静态（顺序 / 长度不变、无动画），允许 `:key="index"` 并加注释说明原因；动态列表一律用稳定 id。与 6c 的 `data-testid` 稳定性同根同源，形成「渲染稳定性 + 测试稳定性」双闭环。
+
 3、**Pinia store 用 setup 风格**——`defineStore('todo', () => {...})`、不写 options 形式。
 
    3a、**按业务域拆 store、不按 state/getters/actions 文件类型拆**——store 内的 ref / computed 直接内联（见 `stores/todo.ts` 现有范例）；除非某状态 / 派生确有跨 store 复用，不拆工厂文件（如 `useTodoState.ts` + `useTodoGetters.ts` 是无意义分层，让状态来源更难追）。多个关注点时按业务域拆 store（如 `useTodoStore` / `useFilterStore`），不是按文件类型拆。
@@ -98,6 +100,8 @@
 - ❌ 两个状态分支各自重复写大段公共 Tailwind 类，改间距时需同步两处（应提取公共前缀到 `base` 变量 + 模板字符串拼接差异部分）
 - ❌ ≥2 个 spec 写了**完全相同**的前置逻辑（如 IDB 清理 + reload）却各自重复 `beforeEach`，而不是提取到 `tests/e2e/fixtures.ts`（`base.extend` fixture）
 - ❌ 多个单测 spec 各自 `const idbStore = {}` + 重复粘贴 `function memoryStorage()`（应提取到 `tests/unit/_helpers/storage-mock.ts`，各 spec 从 helpers 导入）
+- ❌ `v-for` 用 `:key="index"`（动态列表重排 / 插入 / 删除时 DOM 复用错乱，应用稳定业务 id `:key="item.id"`；静态列表例外，需加注释说明）
+
 - ❌ v-for 内 `data-testid="list-btn"`（多个相同 testid，e2e 定位不稳定，重排后 `.nth(n)` 断言立刻失效）
 - ❌ 注释解释「这里干嘛」（命名要够好）
 - ❌ `types.ts` 手写 `type ViewType = 'list' | 'kanban' | 'calendar'`，同时 `tabs.ts` 单独维护同一组值（双写漂移）
