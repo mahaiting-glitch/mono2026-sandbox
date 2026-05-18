@@ -3,6 +3,17 @@
 
 @theme {
   --color-brand: #4f46e5;
+  --color-brand-hover: #4338ca;
+}
+
+[data-theme="forest"] {
+  --color-brand: #16a34a;
+  --color-brand-hover: #15803d;
+}
+
+[data-theme="sunset"] {
+  --color-brand: #ea580c;
+  --color-brand-hover: #c2410c;
 }
 
 body {

@@ -1,10 +1,23 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, watch, nextTick, computed, onMounted, onUnmounted } from 'vue'
 import { useTodoStore } from './stores/todo'
 import { useColorSchemeStore } from './stores/colorScheme'
+import { useColorThemeStore, type Theme } from './stores/colorTheme'
 
 const store = useTodoStore()
 const colorScheme = useColorSchemeStore()
+const colorTheme = useColorThemeStore()
+
+const THEME_OPTIONS: { value: Theme; label: string }[] = [
+  { value: 'default', label: '默认' },
+  { value: 'forest', label: '森林' },
+  { value: 'sunset', label: '日落' },
+]
+
+const selectedTheme = computed({
+  get: () => colorTheme.theme,
+  set: (v: Theme) => colorTheme.setTheme(v),
+})
 const input = ref('')
 const editingId = ref<string | null>(null)
 const editingTitle = ref('')
@@ -70,12 +83,12 @@ function cancelEdit() {
         type="text"
         ref="todoInputRef"
         placeholder="加点啥"
-        class="flex-1 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        class="flex-1 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--color-brand)"
         data-testid="todo-input"
       />
       <button
         type="submit"
-        class="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
+        class="rounded bg-(--color-brand) px-4 py-2 text-white hover:bg-(--color-brand-hover) disabled:opacity-50"
         :disabled="!input.trim()"
         data-testid="todo-add"
       >
@@ -108,7 +121,7 @@ function cancelEdit() {
           :ref="(el) => { editInputRefs[todo.id] = el as HTMLInputElement | null }"
           v-model="editingTitle"
           type="text"
-          class="flex-1 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          class="flex-1 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-(--color-brand)"
           data-testid="todo-edit-input"
           @blur="saveEdit"
           @keydown.enter.prevent="saveEdit"
@@ -140,5 +153,17 @@ function cancelEdit() {
         清完成
       </button>
     </footer>
+
+    <div class="mt-6 flex items-center justify-end gap-2 text-sm text-slate-500">
+      <label for="theme-select" class="select-none">主题</label>
+      <select
+        id="theme-select"
+        v-model="selectedTheme"
+        data-testid="theme-select"
+        class="rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-2 py-1 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--color-brand)"
+      >
+        <option v-for="t in THEME_OPTIONS" :key="t.value" :value="t.value">{{ t.label }}</option>
+      </select>
+    </div>
   </main>
 </template>
