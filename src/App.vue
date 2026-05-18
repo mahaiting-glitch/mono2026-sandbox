@@ -3,6 +3,7 @@ import { ref, watch, nextTick, computed, onMounted, onUnmounted } from 'vue'
 import { useTodoStore } from './stores/todo'
 import { useColorSchemeStore } from './stores/colorScheme'
 import { useColorThemeStore, type Theme } from './stores/colorTheme'
+import type { Priority } from './types'
 
 const store = useTodoStore()
 const colorScheme = useColorSchemeStore()
@@ -15,11 +16,20 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: 'sunset', label: '日落' },
 ]
 
+const PRIORITY_EMOJI: Record<Priority, string> = {
+  high: '🔴',
+  normal: '⚪',
+  low: '🔵',
+}
+
+const PRIORITY_CYCLE: Priority[] = ['high', 'normal', 'low']
+
 const selectedTheme = computed({
   get: () => colorTheme.theme,
   set: (v: Theme) => colorTheme.setTheme(v),
 })
 const input = ref('')
+const newPriority = ref<Priority>('normal')
 const editingId = ref<string | null>(null)
 const editingTitle = ref('')
 const editInputRefs = ref<Record<string, HTMLInputElement | null>>({})
@@ -52,8 +62,15 @@ watch(editingId, (id) => {
 })
 
 function submit() {
-  store.add(input.value)
+  store.add(input.value, newPriority.value)
   input.value = ''
+  newPriority.value = 'normal'
+}
+
+function cyclePriority(id: string, current: Priority) {
+  const idx = PRIORITY_CYCLE.indexOf(current)
+  const next = PRIORITY_CYCLE[(idx + 1) % PRIORITY_CYCLE.length]!
+  store.setPriority(id, next)
 }
 
 function startEdit(id: string, title: string) {
@@ -86,6 +103,16 @@ function cancelEdit() {
     <h1 class="text-2xl font-semibold mb-6" data-testid="heading">{{ store.headingText }}</h1>
 
     <form class="flex gap-2 mb-6" @submit.prevent="submit">
+      <select
+        v-model="newPriority"
+        aria-label="优先级"
+        data-testid="priority-select"
+        class="rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-2 py-2 text-base cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--color-brand)"
+      >
+        <option value="high">🔴</option>
+        <option value="normal">⚪</option>
+        <option value="low">🔵</option>
+      </select>
       <input
         v-model="input"
         type="text"
@@ -119,6 +146,14 @@ function cancelEdit() {
           @change="store.toggle(todo.id)"
           class="h-4 w-4"
         />
+        <button
+          type="button"
+          :aria-label="'优先级：' + todo.priority"
+          :data-priority="todo.priority"
+          data-testid="todo-priority"
+          class="text-base leading-none hover:scale-110 transition-transform"
+          @click="cyclePriority(todo.id, todo.priority)"
+        >{{ PRIORITY_EMOJI[todo.priority] }}</button>
         <span
           v-if="editingId !== todo.id"
           :class="{ 'line-through text-slate-500': todo.done }"

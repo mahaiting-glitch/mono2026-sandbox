@@ -205,3 +205,67 @@ test('footer 显示当前 milestone', async ({ page }) => {
   await expect(footer).toContainText('当前阶段：')
   await expect(footer).toContainText('数据持久化')
 })
+
+test('priority · 新增默认 normal emoji ⚪', async ({ page }) => {
+  await page.getByTestId('todo-input').fill('普通任务')
+  await page.getByTestId('todo-add').click()
+
+  const priority = page.getByTestId('todo-priority')
+  await expect(priority).toHaveText('⚪')
+  await expect(priority).toHaveAttribute('data-priority', 'normal')
+})
+
+test('priority · 选择 high 后显示 🔴', async ({ page }) => {
+  await page.getByTestId('priority-select').selectOption('high')
+  await page.getByTestId('todo-input').fill('高优先任务')
+  await page.getByTestId('todo-add').click()
+
+  const priority = page.getByTestId('todo-priority')
+  await expect(priority).toHaveText('🔴')
+  await expect(priority).toHaveAttribute('data-priority', 'high')
+})
+
+test('priority · 点击 emoji 循环切换（high→normal→low→high）', async ({ page }) => {
+  await page.getByTestId('todo-input').fill('任务')
+  await page.getByTestId('todo-add').click()
+
+  const priority = page.getByTestId('todo-priority')
+  // 默认 normal(⚪) → low(🔵)
+  await priority.click()
+  await expect(priority).toHaveText('🔵')
+  await expect(priority).toHaveAttribute('data-priority', 'low')
+  // low → high
+  await priority.click()
+  await expect(priority).toHaveText('🔴')
+  await expect(priority).toHaveAttribute('data-priority', 'high')
+  // high → normal
+  await priority.click()
+  await expect(priority).toHaveText('⚪')
+  await expect(priority).toHaveAttribute('data-priority', 'normal')
+})
+
+test('priority · IDB 旧数据无 priority → 显示 ⚪', async ({ page }) => {
+  await page.evaluate(async () => {
+    return new Promise<void>(resolve => {
+      const req = indexedDB.open('keyval-store', 1)
+      req.onupgradeneeded = () => { req.result.createObjectStore('keyval') }
+      req.onsuccess = () => {
+        const db = req.result
+        const tx = db.transaction('keyval', 'readwrite')
+        tx.objectStore('keyval').put(
+          [{ id: 'old1', title: '旧数据无priority', done: false, createdAt: 1 }],
+          'todos'
+        )
+        tx.oncomplete = () => { db.close(); resolve() }
+        tx.onerror = () => { db.close(); resolve() }
+      }
+      req.onerror = () => resolve()
+    })
+  })
+  await page.reload()
+
+  await expect(page.getByTestId('todo-title')).toHaveText('旧数据无priority')
+  const priority = page.getByTestId('todo-priority')
+  await expect(priority).toHaveText('⚪')
+  await expect(priority).toHaveAttribute('data-priority', 'normal')
+})

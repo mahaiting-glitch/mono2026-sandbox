@@ -1,24 +1,38 @@
 import { get, set } from 'idb-keyval'
-import type { Todo } from '../types'
+import type { Todo, Priority } from '../types'
 
 const LEGACY_LS_KEY = 'mono2026-sandbox.todos'
 const IDB_KEY = 'todos'
 
-function isTodo(v: unknown): v is Todo {
+const VALID_PRIORITIES = new Set<string>(['high', 'normal', 'low'])
+
+// Accepts old todos without priority (for migration compatibility)
+function isTodoLike(v: unknown): v is Record<string, unknown> {
   if (typeof v !== 'object' || v === null) return false
   const r = v as Record<string, unknown>
   return (
     typeof r.id === 'string' &&
     typeof r.title === 'string' &&
     typeof r.done === 'boolean' &&
-    typeof r.createdAt === 'number'
+    typeof r.createdAt === 'number' &&
+    (r.priority === undefined || (typeof r.priority === 'string' && VALID_PRIORITIES.has(r.priority)))
   )
+}
+
+function normalizeTodo(r: Record<string, unknown>): Todo {
+  return {
+    id: r.id as string,
+    title: r.title as string,
+    done: r.done as boolean,
+    createdAt: r.createdAt as number,
+    priority: (r.priority as Priority | undefined) ?? 'normal',
+  }
 }
 
 export function useTodoStorage() {
   async function read(): Promise<Todo[]> {
     const val = await get<unknown>(IDB_KEY)
-    if (Array.isArray(val) && val.every(isTodo)) return val as Todo[]
+    if (Array.isArray(val) && val.every(isTodoLike)) return val.map(normalizeTodo)
     return []
   }
 
@@ -33,8 +47,8 @@ export function useTodoStorage() {
     try {
       const parsed: unknown = JSON.parse(raw)
       const existing = await get<unknown>(IDB_KEY)
-      if (Array.isArray(parsed) && parsed.every(isTodo) && existing === undefined) {
-        await set(IDB_KEY, parsed)
+      if (Array.isArray(parsed) && parsed.every(isTodoLike) && existing === undefined) {
+        await set(IDB_KEY, parsed.map(normalizeTodo))
       }
     } catch {
       // corrupt localStorage data — just clean it up
