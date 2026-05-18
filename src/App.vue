@@ -53,9 +53,10 @@ const todoInputRef = ref<HTMLInputElement | null>(null)
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key !== '/') return
+  if (!todoInputRef.value) return  // todoInputRef 挂在 v-if="list" 内，非列表视图时卸载 = null
   if (document.activeElement === todoInputRef.value) return
   e.preventDefault()
-  todoInputRef.value?.focus()
+  todoInputRef.value.focus()
 }
 
 onMounted(() => document.addEventListener('keydown', onKeydown))

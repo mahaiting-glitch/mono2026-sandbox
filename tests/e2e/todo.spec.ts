@@ -129,6 +129,24 @@ test('/ 键焦点已在输入框时不拦截', async ({ page }) => {
   await expect(input).toHaveValue('/')
 })
 
+test('/ 键在非列表视图不拦截·切回列表后快捷键仍生效', async ({ page }) => {
+  // 切到看板视图（todoInputRef 此时为 null）
+  await page.getByTestId('tab-kanban').click()
+  await expect(page.getByTestId('view-kanban')).toBeVisible()
+
+  // 点 h1 给页面焦点，再按 /
+  await page.locator('h1').click()
+  await page.keyboard.press('/')
+
+  // 切回列表视图
+  await page.getByTestId('tab-list').click()
+
+  // / 快捷键在列表视图还能正常聚焦输入框
+  await page.locator('h1').click()
+  await page.keyboard.press('/')
+  await expect(page.getByTestId('todo-input')).toBeFocused()
+})
+
 test('IDB 持久化 · 刷新后数据还在', async ({ page }) => {
   // 直接向 IDB 写数据（模拟上次 session），验证 Vue app 启动时能正确从 IDB 读取
   await page.evaluate(async () => {
