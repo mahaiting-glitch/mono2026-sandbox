@@ -13,7 +13,7 @@ function submit() {
 
 <template>
   <main class="mx-auto max-w-xl px-4 py-12">
-    <h1 class="text-2xl font-semibold mb-6">mono2026 沙盘 · Todo</h1>
+    <h1 class="text-2xl font-semibold mb-6" data-testid="heading">{{ store.headingText }}</h1>
 
     <form class="flex gap-2 mb-6" @submit.prevent="submit">
       <input

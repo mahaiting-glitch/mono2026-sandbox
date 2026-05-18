@@ -19,6 +19,21 @@ test('加 todo + toggle + 删', async ({ page }) => {
   await expect(page.getByTestId('empty')).toBeVisible()
 })
 
+test('H1 显示进度随 todo 变化', async ({ page }) => {
+  const h1 = page.getByTestId('heading')
+  await expect(h1).toHaveText('Todo')
+
+  await page.getByTestId('todo-input').fill('喝水')
+  await page.getByTestId('todo-add').click()
+  await expect(h1).toHaveText('Todo · 剩 1 / 总 1')
+
+  await page.getByRole('checkbox').first().check()
+  await expect(h1).toHaveText('Todo · 剩 0 / 总 1')
+
+  await page.getByTestId('todo-remove').click()
+  await expect(h1).toHaveText('Todo')
+})
+
 test('空字符串拦', async ({ page }) => {
   const btn = page.getByTestId('todo-add')
   await expect(btn).toBeDisabled()

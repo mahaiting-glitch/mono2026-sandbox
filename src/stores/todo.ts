@@ -19,6 +19,9 @@ export const useTodoStore = defineStore('todo', () => {
 
   const remaining = computed(() => items.value.filter(t => !t.done).length)
   const total = computed(() => items.value.length)
+  const headingText = computed(() =>
+    total.value > 0 ? `Todo · 剩 ${remaining.value} / 总 ${total.value}` : 'Todo'
+  )
 
   function add(title: string) {
     const trimmed = title.trim()
@@ -46,5 +49,5 @@ export const useTodoStore = defineStore('todo', () => {
 
   watch(items, v => localStorage.setItem(STORAGE_KEY, JSON.stringify(v)), { deep: true })
 
-  return { items, remaining, total, add, toggle, remove, clearDone }
+  return { items, remaining, total, headingText, add, toggle, remove, clearDone }
 })
