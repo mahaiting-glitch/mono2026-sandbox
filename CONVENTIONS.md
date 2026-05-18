@@ -62,6 +62,8 @@
 
    6d、**Playwright 选择器优先级：`getByRole` > stable testid > `getByText` > CSS selector；禁 xpath / `.nth()`**——选取交互元素时按优先级从高到低：①`getByRole('button', { name: '保存' })` / `getByLabel` / `getByPlaceholder`（语义定位、与 a11y 对齐、重构不失效）；②`getByTestId('save-btn')`（`data-testid` 携带稳定 id、见 6c）；③`getByText('保存')`（文本定位、文案变更即失效、慎用）；④CSS selector（`page.locator('.save-btn')`，最后兜底）。禁止用 xpath（`page.locator('//button[1]')`）——DOM 结构变化即失效；禁止用 `.nth(n)` 顺序定位可交互元素（列表重排后立刻失效，6c 的稳定 testid 就是为替代它而存在）。❌ `page.locator('button').nth(0).click()` / `page.locator('//form/button[2]')` → ✅ `page.getByRole('button', { name: '新建列表' }).click()` / `page.getByTestId('list-btn-abc123').click()`。
 
+   6e、**禁止用 `waitForTimeout` 做流程等待——改用事件驱动等待**——`page.waitForTimeout(N)` 硬等固定毫秒是时间依赖 flaky 的来源（6d 覆盖选择器依赖，此条覆盖时间依赖）：等请求结束用 `waitForResponse`（**必须在触发操作前注册 promise**：`const resp = page.waitForResponse(url); await click(); await resp;`，不能 `await click()` 后再 `waitForResponse`）；等元素出现用 `await expect(locator).toBeVisible()`，等元素消失用 `await expect(locator).toBeHidden()`，等导航结束用 `page.waitForURL(pattern)`，等多次异步副作用收敛用 `await expect.poll(() => ...)` / `page.waitForLoadState('networkidle')`。调试期临时 sleep 不入库，改用 `--debug` / `page.pause()`。❌ `await page.waitForTimeout(500)` 等待请求完成 / 等弹窗出现 → ✅ `const resp = page.waitForResponse('/api/todos'); await triggerAction(); await resp;` 或 `await expect(page.getByTestId('dialog')).toBeVisible()`。
+
 7、**改动范围 ≤ 200 行 / PR**——拆得越细越好、单 issue 单关注点；大改动拆里程碑。
 
 8、**Commit message 中文 + conventional 前缀**——`feat:` / `fix:` / `docs:` / `test:` / `chore:` / `refactor:`、标题 ≤ 50 字。
@@ -107,6 +109,8 @@
 - ❌ v-for 内 `data-testid="list-btn"`（多个相同 testid，e2e 定位不稳定，重排后 `.nth(n)` 断言立刻失效）
 - ❌（6d）靠 `.nth(n)` / `.first()` 定位可交互元素（列表重排后立刻失效，应用稳定 testid 或 `getByRole`）
 - ❌（6d）靠 xpath 定位可交互元素（`page.locator('//form/button[2]')`，结构变化即失效，应用语义/testid 选择器）
+- ❌（6e）`await page.waitForTimeout(500)` 等待请求完成（应用 `const resp = page.waitForResponse(url); await trigger(); await resp;`，注意需在触发操作前注册 promise）
+- ❌（6e）`await page.waitForTimeout(1000)` 等弹窗出现（应用 `await expect(dialog).toBeVisible()`）
 - ❌ 注释解释「这里干嘛」（命名要够好）
 - ❌ `types.ts` 手写 `type ViewType = 'list' | 'kanban' | 'calendar'`，同时 `tabs.ts` 单独维护同一组值（双写漂移）
 - ❌ 常量文件只 export 数据、消费方绕去 `types.ts` 取同名类型（非 co-locate）
