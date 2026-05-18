@@ -1,25 +1,4 @@
-import { test, expect } from '@playwright/test'
-
-test.beforeEach(async ({ page }) => {
-  await page.goto('/')
-  await page.evaluate(async () => {
-    localStorage.clear()
-    // Clear the 'todos' key without deleting the whole DB (avoids blocked-connection timeout)
-    await new Promise<void>(resolve => {
-      const openReq = indexedDB.open('keyval-store')
-      openReq.onerror = () => resolve()
-      openReq.onsuccess = () => {
-        const db = openReq.result
-        if (!db.objectStoreNames.contains('keyval')) { db.close(); resolve(); return }
-        const tx = db.transaction('keyval', 'readwrite')
-        tx.objectStore('keyval').delete('todos')
-        tx.oncomplete = () => { db.close(); resolve() }
-        tx.onerror = () => { db.close(); resolve() }
-      }
-    })
-  })
-  await page.reload()
-})
+import { test, expect } from './fixtures'
 
 test('加 todo + toggle + 删', async ({ page }) => {
   await page.getByTestId('todo-input').fill('喝水')

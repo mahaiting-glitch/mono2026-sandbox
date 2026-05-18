@@ -1,25 +1,5 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 import AxeBuilder from '@axe-core/playwright'
-
-test.beforeEach(async ({ page }) => {
-  await page.goto('/')
-  await page.evaluate(async () => {
-    localStorage.clear()
-    await new Promise<void>(resolve => {
-      const openReq = indexedDB.open('keyval-store')
-      openReq.onerror = () => resolve()
-      openReq.onsuccess = () => {
-        const db = openReq.result
-        if (!db.objectStoreNames.contains('keyval')) { db.close(); resolve(); return }
-        const tx = db.transaction('keyval', 'readwrite')
-        tx.objectStore('keyval').delete('todos')
-        tx.oncomplete = () => { db.close(); resolve() }
-        tx.onerror = () => { db.close(); resolve() }
-      }
-    })
-  })
-  await page.reload()
-})
 
 test('axe-core: 空状态 0 violation', async ({ page }) => {
   const results = await new AxeBuilder({ page }).analyze()
