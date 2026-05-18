@@ -237,8 +237,10 @@ describe('useTodoStore', () => {
       expect(s.items[0]!.title).toBe('迁移测试')
       expect(s.items[0]!.priority).toBe('normal')
       expect(localStorage.getItem(LS_TODOS_LEGACY_KEY)).toBeNull()
-      // 写入 IDB 时已补上 priority + schema version
-      expect(idbStore['todos']).toEqual({ __schema_version: 1, items: [{ ...todos[0], priority: 'normal' }] })
+      // localStorage 迁移先写 v1、read() 再升 v3（含 listId）
+      expect((idbStore['todos'] as { __schema_version: number }).__schema_version).toBe(3)
+      expect((idbStore['todos'] as { items: Array<{ title: string; priority: string }> }).items[0]!.title).toBe('迁移测试')
+      expect((idbStore['todos'] as { items: Array<{ priority: string }> }).items[0]!.priority).toBe('normal')
     })
 
     it('IDB 已有数据时不覆盖、仅清 localStorage', async () => {

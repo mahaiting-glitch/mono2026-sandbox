@@ -14,11 +14,11 @@ describe('useTodoStorage · schema version', () => {
     vi.stubGlobal('localStorage', memoryStorage())
   })
 
-  it('write 存入 __schema_version: 1', async () => {
+  it('write 存入 __schema_version: 3', async () => {
     const storage = useTodoStorage()
     const todo = { id: '1', title: 'test', done: false, createdAt: 100, priority: 'normal' as const }
     await storage.write([todo])
-    expect(idbStore['todos']).toEqual({ __schema_version: 1, items: [todo] })
+    expect(idbStore['todos']).toEqual({ __schema_version: 3, items: [todo] })
   })
 
   it('write + read · note 字段正确持久化', async () => {
@@ -32,34 +32,65 @@ describe('useTodoStorage · schema version', () => {
   it('read · 旧数据无 note 字段 → note 为 undefined', async () => {
     const storage = useTodoStorage()
     idbStore['todos'] = {
-      __schema_version: 1,
-      items: [{ id: '1', title: 'old', done: false, createdAt: 100, priority: 'normal' }],
+      __schema_version: 3,
+      items: [{ id: '1', title: 'old', done: false, createdAt: 100, priority: 'normal', listId: 'list-1' }],
     }
     const todos = await storage.read()
     expect(todos[0]!.note).toBeUndefined()
   })
 
-  it('read · 含 __schema_version 字段 → 不动、正常返回 items', async () => {
+  it('read · 含 __schema_version: 3 → 不动、正常返回 items', async () => {
     const storage = useTodoStorage()
     idbStore['todos'] = {
-      __schema_version: 1,
-      items: [{ id: '1', title: 'versioned', done: false, createdAt: 100, priority: 'normal' }],
+      __schema_version: 3,
+      items: [{ id: '1', title: 'versioned', done: false, createdAt: 100, priority: 'normal', listId: 'list-1' }],
     }
     const todos = await storage.read()
     expect(todos).toHaveLength(1)
     expect(todos[0]!.title).toBe('versioned')
     // IDB 数据未被改写
-    expect((idbStore['todos'] as { __schema_version: number }).__schema_version).toBe(1)
+    expect((idbStore['todos'] as { __schema_version: number }).__schema_version).toBe(3)
   })
 
-  it('read · 缺 __schema_version（旧格式数组）→ 自动升级存回 __schema_version: 1', async () => {
-    const storage = useTodoStorage()
+  it('read · 缺 __schema_version（旧格式数组）→ 自动升级到 v3', async () => {
     const legacyItem = { id: '1', title: 'legacy', done: false, createdAt: 100, priority: 'normal' }
     idbStore['todos'] = [legacyItem]
+    const storage = useTodoStorage()
     const todos = await storage.read()
     expect(todos).toHaveLength(1)
     expect(todos[0]!.title).toBe('legacy')
-    // 自动升级：IDB 已回写新格式
-    expect(idbStore['todos']).toEqual({ __schema_version: 1, items: [legacyItem] })
+    // 自动升级到 v3
+    expect((idbStore['todos'] as { __schema_version: number }).__schema_version).toBe(3)
+  })
+})
+
+describe('useTodoStorage · v3 迁移', () => {
+  beforeEach(() => {
+    clearIdbStore()
+    vi.stubGlobal('localStorage', memoryStorage())
+  })
+
+  it('v1 → v3 迁移：db 版本变为 3', async () => {
+    idbStore['todos'] = {
+      __schema_version: 1,
+      items: [{ id: '1', title: 'old', done: false, createdAt: 100, priority: 'normal' }],
+    }
+    const storage = useTodoStorage()
+    await storage.read()
+    expect((idbStore['todos'] as { __schema_version: number }).__schema_version).toBe(3)
+  })
+
+  it('v1 → v3 迁移：旧 todos 迁移后 listId = 默认 list id', async () => {
+    idbStore['todos'] = {
+      __schema_version: 1,
+      items: [{ id: '1', title: 'old', done: false, createdAt: 100, priority: 'normal' }],
+    }
+    const storage = useTodoStorage()
+    const todos = await storage.read()
+
+    const listsData = idbStore['lists'] as { items: Array<{ id: string }>; defaultListId: string }
+    expect(listsData.items).toHaveLength(1)
+    expect(listsData.defaultListId).toBe(listsData.items[0]!.id)
+    expect(todos[0]!.listId).toBe(listsData.defaultListId)
   })
 })
