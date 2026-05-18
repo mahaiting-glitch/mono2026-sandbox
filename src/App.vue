@@ -5,6 +5,7 @@ import { useColorSchemeStore } from './stores/colorScheme'
 import { useColorThemeStore, type Theme } from './stores/colorTheme'
 import type { Priority, ViewType } from './types'
 import TabBar from './components/TabBar.vue'
+import KanbanView from './components/KanbanView.vue'
 
 const LS_VIEW_KEY = 'mono2026-sandbox.view'
 
@@ -285,9 +286,10 @@ function cancelNoteEdit() {
 
     <div
       v-else-if="activeView === 'kanban'"
-      class="mt-8 text-center text-slate-400 dark:text-slate-500"
       data-testid="view-kanban"
-    >看板视图（待实现）</div>
+    >
+      <KanbanView />
+    </div>
 
     <div
       v-else-if="activeView === 'calendar'"
