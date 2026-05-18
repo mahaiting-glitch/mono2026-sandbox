@@ -4,11 +4,24 @@ import type { Todo } from '../types'
 
 const STORAGE_KEY = 'mono2026-sandbox.todos'
 
+function isTodo(v: unknown): v is Todo {
+  if (typeof v !== 'object' || v === null) return false
+  const r = v as Record<string, unknown>
+  return (
+    typeof r.id === 'string' &&
+    typeof r.title === 'string' &&
+    typeof r.done === 'boolean' &&
+    typeof r.createdAt === 'number'
+  )
+}
+
 function load(): Todo[] {
   const raw = localStorage.getItem(STORAGE_KEY)
   if (!raw) return []
   try {
-    return JSON.parse(raw) as Todo[]
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed) || !parsed.every(isTodo)) return []
+    return parsed
   } catch {
     return []
   }
