@@ -157,6 +157,27 @@ test('IDB 持久化 · 刷新后数据还在', async ({ page }) => {
   await expect(page.getByTestId('todo-title')).toHaveText('持久化测试')
 })
 
+test('主题切换 · 下拉改 data-theme + 刷新保留', async ({ page }) => {
+  const html = page.locator('html')
+  const select = page.getByTestId('theme-select')
+
+  await expect(html).toHaveAttribute('data-theme', 'default')
+  await expect(select).toHaveValue('default')
+
+  await select.selectOption('forest')
+  await expect(html).toHaveAttribute('data-theme', 'forest')
+
+  await select.selectOption('sunset')
+  await expect(html).toHaveAttribute('data-theme', 'sunset')
+
+  await page.reload()
+  await expect(html).toHaveAttribute('data-theme', 'sunset')
+  await expect(select).toHaveValue('sunset')
+
+  await select.selectOption('default')
+  await expect(html).toHaveAttribute('data-theme', 'default')
+})
+
 test('dark mode 切换 + 持久化', async ({ page }) => {
   // 强制 light 起点
   await page.evaluate(() => localStorage.setItem('mono2026-sandbox.colorScheme', 'light'))
