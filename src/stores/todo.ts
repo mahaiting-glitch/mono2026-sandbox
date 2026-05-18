@@ -60,7 +60,13 @@ export const useTodoStore = defineStore('todo', () => {
     items.value = items.value.filter(t => !t.done)
   }
 
+  function edit(id: string, title: string) {
+    const trimmed = title.trim()
+    const t = items.value.find(t => t.id === id)
+    if (t && trimmed) t.title = trimmed
+  }
+
   watch(items, v => localStorage.setItem(STORAGE_KEY, JSON.stringify(v)), { deep: true })
 
-  return { items, remaining, total, headingText, add, toggle, remove, clearDone }
+  return { items, remaining, total, headingText, add, toggle, remove, clearDone, edit }
 })

@@ -66,6 +66,37 @@ describe('useTodoStore', () => {
     expect(s.items[0]!.title).toBe('b')
   })
 
+  it('edit · 正常更新标题', () => {
+    const s = useTodoStore()
+    s.add('旧标题')
+    const id = s.items[0]!.id
+    s.edit(id, '新标题')
+    expect(s.items[0]!.title).toBe('新标题')
+  })
+
+  it('edit · 空字符串回退原值', () => {
+    const s = useTodoStore()
+    s.add('旧标题')
+    const id = s.items[0]!.id
+    s.edit(id, '   ')
+    expect(s.items[0]!.title).toBe('旧标题')
+  })
+
+  it('edit · trim 后更新', () => {
+    const s = useTodoStore()
+    s.add('旧标题')
+    const id = s.items[0]!.id
+    s.edit(id, '  新标题  ')
+    expect(s.items[0]!.title).toBe('新标题')
+  })
+
+  it('edit · 不存在的 id 无副作用', () => {
+    const s = useTodoStore()
+    s.add('旧标题')
+    s.edit('not-exist', '新标题')
+    expect(s.items[0]!.title).toBe('旧标题')
+  })
+
   it('localStorage 损坏·非 JSON → 回退 []', () => {
     localStorage.setItem('mono2026-sandbox.todos', 'not-valid-json')
     const s = useTodoStore()
