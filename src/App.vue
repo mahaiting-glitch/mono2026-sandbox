@@ -6,6 +6,7 @@ import { useColorThemeStore, type Theme } from './stores/colorTheme'
 import type { Priority, ViewType } from './types'
 import TabBar from './components/TabBar.vue'
 import KanbanView from './components/KanbanView.vue'
+import CalendarView from './components/CalendarView.vue'
 
 const LS_VIEW_KEY = 'mono2026-sandbox.view'
 
@@ -293,9 +294,10 @@ function cancelNoteEdit() {
 
     <div
       v-else-if="activeView === 'calendar'"
-      class="mt-8 text-center text-slate-400 dark:text-slate-500"
       data-testid="view-calendar"
-    >日历视图（待实现）</div>
+    >
+      <CalendarView />
+    </div>
 
     <div class="mt-6 flex items-center justify-end gap-2 text-sm text-slate-500">
       <label for="theme-select" class="select-none">主题</label>
