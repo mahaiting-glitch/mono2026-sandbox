@@ -40,6 +40,22 @@ describe('useTodoStore', () => {
     expect(s.total).toBe(0)
   })
 
+  it('headingText · 0 todo 显示 Todo', () => {
+    const s = useTodoStore()
+    expect(s.headingText).toBe('Todo')
+  })
+
+  it('headingText · 有 todo 显示进度', () => {
+    const s = useTodoStore()
+    s.add('喝水')
+    s.add('吃饭')
+    expect(s.headingText).toBe('Todo · 剩 2 / 总 2')
+    s.toggle(s.items[0]!.id)
+    expect(s.headingText).toBe('Todo · 剩 1 / 总 2')
+    s.toggle(s.items[1]!.id)
+    expect(s.headingText).toBe('Todo · 剩 0 / 总 2')
+  })
+
   it('clearDone 只清已完成', () => {
     const s = useTodoStore()
     s.add('a')
