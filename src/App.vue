@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useTodoStore } from './stores/todo'
 import { useColorSchemeStore } from './stores/colorScheme'
 
@@ -9,6 +9,17 @@ const input = ref('')
 const editingId = ref<string | null>(null)
 const editingTitle = ref('')
 const editInputRefs = ref<Record<string, HTMLInputElement | null>>({})
+const todoInputRef = ref<HTMLInputElement | null>(null)
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key !== '/') return
+  if (document.activeElement === todoInputRef.value) return
+  e.preventDefault()
+  todoInputRef.value?.focus()
+}
+
+onMounted(() => document.addEventListener('keydown', onKeydown))
+onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
 watch(editingId, (id) => {
   if (!id) return
@@ -57,6 +68,7 @@ function cancelEdit() {
       <input
         v-model="input"
         type="text"
+        ref="todoInputRef"
         placeholder="加点啥"
         class="flex-1 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         data-testid="todo-input"
