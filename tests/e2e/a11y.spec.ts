@@ -33,10 +33,13 @@ test('axe-core: 有 todo 时 0 violation', async ({ page }) => {
   expect(results.violations).toEqual([])
 })
 
-test('Tab 序列: theme-toggle → todo-input 可达', async ({ page }) => {
-  // 首次 Tab 进入页面 → theme-toggle（DOM 第一个可聚焦元素）
+test('Tab 序列: theme-toggle → priority-select → todo-input 可达', async ({ page }) => {
+  // DOM 顺序：theme-toggle → priority-select → todo-input
   await page.keyboard.press('Tab')
   await expect(page.getByTestId('theme-toggle')).toBeFocused()
+
+  await page.keyboard.press('Tab')
+  await expect(page.getByTestId('priority-select')).toBeFocused()
 
   await page.keyboard.press('Tab')
   await expect(page.getByTestId('todo-input')).toBeFocused()
@@ -49,16 +52,21 @@ test('Tab 序列: todo-input 有内容时 todo-add 可聚焦', async ({ page }) 
   await expect(page.getByTestId('todo-add')).toBeFocused()
 })
 
-test('Tab 序列: todo 列表中 checkbox → 删除按钮可达', async ({ page }) => {
+test('Tab 序列: todo 列表中 checkbox → priority-button → 删除按钮可达', async ({ page }) => {
   await page.getByTestId('todo-input').fill('买菜')
   await page.getByTestId('todo-add').click()
 
   // 提交后 input 清空、todo-add 重新 disabled
-  // 从 todo-input Tab → 跳过 disabled add 按钮 → 直接到 checkbox
+  // todo-input → 跳过 disabled add → checkbox
   await page.getByTestId('todo-input').focus()
   await page.keyboard.press('Tab')
   await expect(page.getByRole('checkbox')).toBeFocused()
 
+  // checkbox → priority-button
+  await page.keyboard.press('Tab')
+  await expect(page.getByTestId('todo-priority')).toBeFocused()
+
+  // priority-button → 删除
   await page.keyboard.press('Tab')
   await expect(page.getByRole('button', { name: '删除：买菜' })).toBeFocused()
 })
@@ -91,11 +99,13 @@ test('aria snapshot: 有 todo 时 main 区域结构', async ({ page }) => {
   await expect(page.locator('main')).toMatchAriaSnapshot(`
     - main:
       - heading /Todo/
+      - combobox "优先级"
       - textbox "新待办事项"
       - button "添加待办"
       - list:
         - listitem:
           - checkbox "标记完成：买菜"
+          - button "优先级：normal"
           - text: 买菜
           - button "删除：买菜"
       - text: /还剩 1 \/ 1/

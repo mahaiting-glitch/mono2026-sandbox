@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { Todo } from '../types'
+import type { Todo, Priority } from '../types'
 import { useTodoStorage } from '../composables/useTodoStorage'
 
 export const useTodoStore = defineStore('todo', () => {
@@ -22,7 +22,7 @@ export const useTodoStore = defineStore('todo', () => {
     total.value > 0 ? `Todo · 剩 ${remaining.value} / 总 ${total.value}` : 'Todo'
   )
 
-  function add(title: string) {
+  function add(title: string, priority: Priority = 'normal') {
     const trimmed = title.trim()
     if (!trimmed) return
     items.value.push({
@@ -30,7 +30,13 @@ export const useTodoStore = defineStore('todo', () => {
       title: trimmed,
       done: false,
       createdAt: Date.now(),
+      priority,
     })
+  }
+
+  function setPriority(id: string, priority: Priority) {
+    const t = items.value.find(t => t.id === id)
+    if (t) t.priority = priority
   }
 
   function toggle(id: string) {
@@ -54,5 +60,5 @@ export const useTodoStore = defineStore('todo', () => {
 
   watch(items, v => { if (initialized) void storage.write(v) }, { deep: true })
 
-  return { items, remaining, total, headingText, add, toggle, remove, clearDone, edit, _initPromise }
+  return { items, remaining, total, headingText, add, toggle, remove, clearDone, edit, setPriority, _initPromise }
 })

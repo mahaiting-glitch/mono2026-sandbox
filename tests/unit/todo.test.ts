@@ -51,6 +51,41 @@ describe('useTodoStore', () => {
     expect(s.total).toBe(0)
   })
 
+  it('add · 默认 priority 为 normal', async () => {
+    const s = useTodoStore()
+    await s._initPromise
+    s.add('喝水')
+    expect(s.items[0]!.priority).toBe('normal')
+  })
+
+  it('add · 指定 priority', async () => {
+    const s = useTodoStore()
+    await s._initPromise
+    s.add('紧急任务', 'high')
+    s.add('低优先级', 'low')
+    expect(s.items[0]!.priority).toBe('high')
+    expect(s.items[1]!.priority).toBe('low')
+  })
+
+  it('setPriority · 更新优先级', async () => {
+    const s = useTodoStore()
+    await s._initPromise
+    s.add('任务')
+    const id = s.items[0]!.id
+    s.setPriority(id, 'high')
+    expect(s.items[0]!.priority).toBe('high')
+    s.setPriority(id, 'low')
+    expect(s.items[0]!.priority).toBe('low')
+  })
+
+  it('setPriority · 不存在的 id 无副作用', async () => {
+    const s = useTodoStore()
+    await s._initPromise
+    s.add('任务')
+    s.setPriority('not-exist', 'high')
+    expect(s.items[0]!.priority).toBe('normal')
+  })
+
   it('headingText · 0 todo 显示 Todo', async () => {
     const s = useTodoStore()
     await s._initPromise
@@ -130,7 +165,7 @@ describe('useTodoStore', () => {
   })
 
   describe('localStorage 迁移', () => {
-    it('首次启动从 localStorage 迁移到 IDB', async () => {
+    it('首次启动从 localStorage 迁移到 IDB · 补 priority 默认值', async () => {
       const todos = [{ id: '1', title: '迁移测试', done: false, createdAt: 123 }]
       localStorage.setItem('mono2026-sandbox.todos', JSON.stringify(todos))
 
@@ -139,8 +174,10 @@ describe('useTodoStore', () => {
 
       expect(s.total).toBe(1)
       expect(s.items[0]!.title).toBe('迁移测试')
+      expect(s.items[0]!.priority).toBe('normal')
       expect(localStorage.getItem('mono2026-sandbox.todos')).toBeNull()
-      expect(idbStore['todos']).toEqual(todos)
+      // 写入 IDB 时已补上 priority
+      expect(idbStore['todos']).toEqual([{ ...todos[0], priority: 'normal' }])
     })
 
     it('IDB 已有数据时不覆盖、仅清 localStorage', async () => {
@@ -155,7 +192,18 @@ describe('useTodoStore', () => {
 
       expect(s.total).toBe(1)
       expect(s.items[0]!.title).toBe('已有数据')
+      expect(s.items[0]!.priority).toBe('normal')
       expect(localStorage.getItem('mono2026-sandbox.todos')).toBeNull()
+    })
+
+    it('IDB 旧数据无 priority → read 补默认值', async () => {
+      idbStore['todos'] = [{ id: '1', title: '旧数据', done: false, createdAt: 1 }]
+
+      const s = useTodoStore()
+      await s._initPromise
+
+      expect(s.total).toBe(1)
+      expect(s.items[0]!.priority).toBe('normal')
     })
 
     it('localStorage 数据损坏·JSON 无效 → 清 localStorage 不影响 IDB', async () => {
