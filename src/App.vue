@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useTodoStore } from './stores/todo'
+import { useColorSchemeStore } from './stores/colorScheme'
 
 const store = useTodoStore()
+const colorScheme = useColorSchemeStore()
 const input = ref('')
 
 function submit() {
@@ -12,6 +14,14 @@ function submit() {
 </script>
 
 <template>
+  <button
+    type="button"
+    class="fixed top-4 right-4 rounded-full bg-slate-200 dark:bg-slate-700 p-2 text-lg leading-none hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+    :aria-label="colorScheme.isDark ? '切换到浅色模式' : '切换到深色模式'"
+    data-testid="theme-toggle"
+    @click="colorScheme.toggle()"
+  >{{ colorScheme.isDark ? '☀' : '🌙' }}</button>
+
   <main class="mx-auto max-w-xl px-4 py-12">
     <h1 class="text-2xl font-semibold mb-6" data-testid="heading">{{ store.headingText }}</h1>
 
@@ -20,7 +30,7 @@ function submit() {
         v-model="input"
         type="text"
         placeholder="加点啥"
-        class="flex-1 rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        class="flex-1 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         data-testid="todo-input"
       />
       <button
@@ -37,11 +47,12 @@ function submit() {
       <li
         v-for="todo in store.items"
         :key="todo.id"
-        class="flex items-center gap-3 rounded border border-slate-200 bg-white px-3 py-2"
+        class="flex items-center gap-3 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2"
       >
         <input
           type="checkbox"
           :checked="todo.done"
+          :aria-label="'标记完成：' + todo.title"
           @change="store.toggle(todo.id)"
           class="h-4 w-4"
         />
@@ -66,7 +77,7 @@ function submit() {
       <button
         type="button"
         @click="store.clearDone()"
-        class="hover:text-slate-900"
+        class="hover:text-slate-900 dark:hover:text-slate-100"
         data-testid="clear-done"
       >
         清完成
