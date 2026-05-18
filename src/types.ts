@@ -1,6 +1,12 @@
 export type Priority = 'high' | 'normal' | 'low'
 export type ViewType = 'list' | 'kanban' | 'calendar'
 
+export interface List {
+  id: string
+  title: string
+  createdAt: number
+}
+
 export interface Todo {
   id: string
   title: string
@@ -8,4 +14,5 @@ export interface Todo {
   createdAt: number
   priority: Priority
   note?: string
+  listId?: string
 }
