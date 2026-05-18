@@ -26,6 +26,23 @@
 
 8、**Commit message 中文 + conventional 前缀**——`feat:` / `fix:` / `docs:` / `test:` / `chore:` / `refactor:`、标题 ≤ 50 字。
 
+9、**枚举列表用 `as const` 做 SoT、类型同文件派生**——
+
+   9a、**`as const` 常量做 SoT**——菜单项 / tab / 状态枚举一律 `export const XS = [...] as const`，再 `export type XDef = typeof XS[number]`、`export type X = XDef['value']` 派生联合类型（也可一步 `typeof XS[number]['value']`，二选一）；禁止另写同一组值的字符串联合（双写 = 漂移风险）。**外层 `as const` 必须保留**——丢掉后 `value` 推断退化成 `string`、派生类型失效。
+
+   ```ts
+   // ✅ constants/tabs.ts
+   export const TABS = [
+     { value: 'list', label: '列表' },
+     { value: 'kanban', label: '看板' },
+     { value: 'calendar', label: '日历' },
+   ] as const                              // 必须保留，丢掉则 value: string
+   export type TabDef = typeof TABS[number]
+   export type ViewType = TabDef['value']   // 从数据派生，无双写
+   ```
+
+   9b、**常量与派生类型同文件 co-locate**——常量文件同时 `export type X = ...`，消费方直接 `import type { X }` 不用绕去 `types.ts`；若需统一入口，`types.ts` 可 re-export（`export type { X } from '../constants/xs'`），不在 `types.ts` 里重新 `type X = ...`（re-export 只转发、不重新声明）。
+
 ## 反例
 
 - ❌ boolean prop 不用 is/has/can 前缀：`completed`、`error`（应为 `isCompleted`、`hasError`）
@@ -38,3 +55,5 @@
 - ❌ 一 PR 改 500 行跨 5 个 feature
 - ❌ 写 `tailwind.config.js`
 - ❌ 注释解释「这里干嘛」（命名要够好）
+- ❌ `types.ts` 手写 `type ViewType = 'list' | 'kanban' | 'calendar'`，同时 `tabs.ts` 单独维护同一组值（双写漂移）
+- ❌ 常量文件只 export 数据、消费方绕去 `types.ts` 取同名类型（非 co-locate）
