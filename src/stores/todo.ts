@@ -16,10 +16,18 @@ export const useTodoStore = defineStore('todo', () => {
       initialized = true
     })
 
+  const PRIORITY_ORDER: Record<Priority, number> = { high: 0, normal: 1, low: 2 }
+
   const remaining = computed(() => items.value.filter(t => !t.done).length)
   const total = computed(() => items.value.length)
   const headingText = computed(() =>
     total.value > 0 ? `Todo · 剩 ${remaining.value} / 总 ${total.value}` : 'Todo'
+  )
+  const sortedItems = computed(() =>
+    [...items.value].sort((a, b) => {
+      if (a.done !== b.done) return a.done ? 1 : -1
+      return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
+    })
   )
 
   function add(title: string, priority: Priority = 'normal') {
@@ -71,5 +79,5 @@ export const useTodoStore = defineStore('todo', () => {
 
   watch(items, v => { if (initialized) void storage.write(v) }, { deep: true })
 
-  return { items, remaining, total, headingText, add, toggle, remove, clearDone, edit, setPriority, setNote, _initPromise }
+  return { items, sortedItems, remaining, total, headingText, add, toggle, remove, clearDone, edit, setPriority, setNote, _initPromise }
 })
