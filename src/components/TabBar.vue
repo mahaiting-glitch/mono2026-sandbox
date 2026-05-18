@@ -1,14 +1,9 @@
 <script setup lang="ts">
 import type { ViewType } from '../types'
+import { TABS } from '../constants/tabs'
 
 defineProps<{ active: ViewType }>()
 const emit = defineEmits<{ change: [tab: ViewType] }>()
-
-const TABS: { value: ViewType; label: string }[] = [
-  { value: 'list', label: '列表' },
-  { value: 'kanban', label: '看板' },
-  { value: 'calendar', label: '日历' },
-]
 </script>
 
 <template>
