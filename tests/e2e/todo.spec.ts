@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures'
+import { LS_COLOR_SCHEME_KEY } from '../../src/constants/storage-keys'
 
 test('加 todo + toggle + 删', async ({ page }) => {
   await page.getByTestId('todo-input').fill('喝水')
@@ -177,7 +178,7 @@ test('主题切换 · 下拉改 data-theme + 刷新保留', async ({ page }) => 
 
 test('dark mode 切换 + 持久化', async ({ page }) => {
   // 强制 light 起点
-  await page.evaluate(() => localStorage.setItem('mono2026-sandbox.colorScheme', 'light'))
+  await page.evaluate((key) => localStorage.setItem(key, 'light'), LS_COLOR_SCHEME_KEY)
   await page.reload()
 
   const html = page.locator('html')

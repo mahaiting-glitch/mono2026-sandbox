@@ -7,8 +7,8 @@ import type { Priority, ViewType } from './types'
 import TabBar from './components/TabBar.vue'
 import KanbanView from './components/KanbanView.vue'
 import CalendarView from './components/CalendarView.vue'
-
-const LS_VIEW_KEY = 'mono2026-sandbox.view'
+import { LS_VIEW_KEY } from './constants/storage-keys'
+import { PRIORITY_EMOJI } from './constants/priority'
 
 function readSavedView(): ViewType {
   const v = localStorage.getItem(LS_VIEW_KEY)
@@ -30,12 +30,6 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: 'forest', label: '森林' },
   { value: 'sunset', label: '日落' },
 ]
-
-const PRIORITY_EMOJI: Record<Priority, string> = {
-  high: '🔴',
-  normal: '⚪',
-  low: '🔵',
-}
 
 const PRIORITY_CYCLE: Priority[] = ['high', 'normal', 'low']
 

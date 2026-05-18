@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { Todo, Priority } from '../types'
+import type { Todo } from '../types'
+import { PRIORITY_EMOJI } from '../constants/priority'
 
 defineProps<{
   todo: Todo
@@ -8,12 +9,6 @@ defineProps<{
 const emit = defineEmits<{
   toggle: []
 }>()
-
-const PRIORITY_EMOJI: Record<Priority, string> = {
-  high: '🔴',
-  normal: '⚪',
-  low: '🔵',
-}
 </script>
 
 <template>

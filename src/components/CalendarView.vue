@@ -1,15 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTodoStore } from '../stores/todo'
-import type { Priority, Todo } from '../types'
+import type { Todo } from '../types'
+import { PRIORITY_EMOJI } from '../constants/priority'
 
 const store = useTodoStore()
-
-const PRIORITY_EMOJI: Record<Priority, string> = {
-  high: '🔴',
-  normal: '⚪',
-  low: '🔵',
-}
 
 function toDayStart(ts: number): number {
   const d = new Date(ts)

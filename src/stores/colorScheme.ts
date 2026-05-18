@@ -1,10 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, watch, onScopeDispose } from 'vue'
-
-const LS_KEY = 'mono2026-sandbox.colorScheme'
+import { LS_COLOR_SCHEME_KEY } from '../constants/storage-keys'
 
 function readSaved(): 'dark' | 'light' | null {
-  const v = localStorage.getItem(LS_KEY)
+  const v = localStorage.getItem(LS_COLOR_SCHEME_KEY)
   return v === 'dark' || v === 'light' ? v : null
 }
 
@@ -25,7 +24,7 @@ export const useColorSchemeStore = defineStore('colorScheme', () => {
 
   function toggle() {
     isDark.value = !isDark.value
-    localStorage.setItem(LS_KEY, isDark.value ? 'dark' : 'light')
+    localStorage.setItem(LS_COLOR_SCHEME_KEY, isDark.value ? 'dark' : 'light')
   }
 
   return { isDark, toggle }

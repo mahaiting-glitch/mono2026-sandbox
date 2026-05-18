@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
+import { LS_COLOR_THEME_KEY } from '../constants/storage-keys'
 
 export type Theme = 'default' | 'forest' | 'sunset'
 
 const VALID: Theme[] = ['default', 'forest', 'sunset']
-export const COLOR_THEME_LS_KEY = 'mono2026-sandbox.colorTheme'
 
 function readSaved(): Theme | null {
-  const v = localStorage.getItem(COLOR_THEME_LS_KEY)
+  const v = localStorage.getItem(LS_COLOR_THEME_KEY)
   return VALID.includes(v as Theme) ? (v as Theme) : null
 }
 
@@ -20,7 +20,7 @@ export const useColorThemeStore = defineStore('colorTheme', () => {
 
   function setTheme(t: Theme) {
     theme.value = t
-    localStorage.setItem(COLOR_THEME_LS_KEY, t)
+    localStorage.setItem(LS_COLOR_THEME_KEY, t)
   }
 
   return { theme, setTheme }

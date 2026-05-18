@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useColorSchemeStore } from '../../src/stores/colorScheme'
+import { LS_COLOR_SCHEME_KEY } from '../../src/constants/storage-keys'
 
 function memoryStorage() {
   const store: Record<string, string> = {}
@@ -26,8 +27,6 @@ function stubMatchMedia(matches: boolean) {
   return mql
 }
 
-const LS_KEY = 'mono2026-sandbox.colorScheme'
-
 describe('useColorSchemeStore', () => {
   beforeEach(() => {
     vi.stubGlobal('localStorage', memoryStorage())
@@ -50,7 +49,7 @@ describe('useColorSchemeStore', () => {
   })
 
   it('localStorage=dark → isDark true 无视系统设置', () => {
-    localStorage.setItem(LS_KEY, 'dark')
+    localStorage.setItem(LS_COLOR_SCHEME_KEY, 'dark')
     stubMatchMedia(false)
     const s = useColorSchemeStore()
     expect(s.isDark).toBe(true)
@@ -58,7 +57,7 @@ describe('useColorSchemeStore', () => {
   })
 
   it('localStorage=light → isDark false 无视系统设置', () => {
-    localStorage.setItem(LS_KEY, 'light')
+    localStorage.setItem(LS_COLOR_SCHEME_KEY, 'light')
     stubMatchMedia(true)
     const s = useColorSchemeStore()
     expect(s.isDark).toBe(false)
@@ -70,17 +69,17 @@ describe('useColorSchemeStore', () => {
     const s = useColorSchemeStore()
     s.toggle()
     expect(s.isDark).toBe(true)
-    expect(localStorage.getItem(LS_KEY)).toBe('dark')
+    expect(localStorage.getItem(LS_COLOR_SCHEME_KEY)).toBe('dark')
     expect(document.documentElement.classList.contains('dark')).toBe(true)
   })
 
   it('toggle · dark → light · 写入 localStorage', () => {
-    localStorage.setItem(LS_KEY, 'dark')
+    localStorage.setItem(LS_COLOR_SCHEME_KEY, 'dark')
     stubMatchMedia(false)
     const s = useColorSchemeStore()
     s.toggle()
     expect(s.isDark).toBe(false)
-    expect(localStorage.getItem(LS_KEY)).toBe('light')
+    expect(localStorage.getItem(LS_COLOR_SCHEME_KEY)).toBe('light')
     expect(document.documentElement.classList.contains('dark')).toBe(false)
   })
 
@@ -94,7 +93,7 @@ describe('useColorSchemeStore', () => {
   })
 
   it('系统改变 · 有显式偏好 → 不跟随', () => {
-    localStorage.setItem(LS_KEY, 'light')
+    localStorage.setItem(LS_COLOR_SCHEME_KEY, 'light')
     const mql = stubMatchMedia(false)
     const s = useColorSchemeStore()
 

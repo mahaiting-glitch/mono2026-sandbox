@@ -1,7 +1,6 @@
 import { get, set } from 'idb-keyval'
 import type { Todo, Priority } from '../types'
-
-const LEGACY_LS_KEY = 'mono2026-sandbox.todos'
+import { LS_TODOS_LEGACY_KEY } from '../constants/storage-keys'
 const IDB_KEY = 'todos'
 const SCHEMA_VERSION = 1
 
@@ -68,7 +67,7 @@ export function useTodoStorage() {
 
   // Migrate from localStorage on first run; IDB takes precedence if it already has data.
   async function migrate(): Promise<void> {
-    const raw = localStorage.getItem(LEGACY_LS_KEY)
+    const raw = localStorage.getItem(LS_TODOS_LEGACY_KEY)
     if (!raw) return
     try {
       const parsed: unknown = JSON.parse(raw)
@@ -79,7 +78,7 @@ export function useTodoStorage() {
     } catch {
       // corrupt localStorage data — just clean it up
     }
-    localStorage.removeItem(LEGACY_LS_KEY)
+    localStorage.removeItem(LS_TODOS_LEGACY_KEY)
   }
 
   return { read, write, migrate }
