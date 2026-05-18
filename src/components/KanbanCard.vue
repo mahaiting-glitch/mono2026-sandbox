@@ -1,14 +1,33 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Todo } from '../types'
 import { PRIORITY_EMOJI } from '../constants/priority'
 
-defineProps<{
+const props = defineProps<{
   todo: Todo
 }>()
 
 const emit = defineEmits<{
   toggle: []
 }>()
+
+const BASE_BTN = 'text-xs rounded px-2 py-0.5 transition-colors'
+
+const toggleBtn = computed(() =>
+  props.todo.done
+    ? {
+        cls: `${BASE_BTN} border border-slate-300 dark:border-slate-600 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100`,
+        ariaLabel: '撤回：' + props.todo.title,
+        testid: 'kanban-undo-btn',
+        text: '撤回',
+      }
+    : {
+        cls: `${BASE_BTN} bg-(--color-brand) text-white hover:bg-(--color-brand-hover)`,
+        ariaLabel: '完成：' + props.todo.title,
+        testid: 'kanban-done-btn',
+        text: '完成',
+      }
+)
 </script>
 
 <template>
@@ -23,20 +42,11 @@ const emit = defineEmits<{
       data-testid="kanban-card-title"
     >{{ todo.title }}</span>
     <button
-      v-if="!todo.done"
       type="button"
-      class="text-xs rounded bg-(--color-brand) text-white px-2 py-0.5 hover:bg-(--color-brand-hover) transition-colors"
-      :aria-label="'完成：' + todo.title"
-      data-testid="kanban-done-btn"
+      :class="toggleBtn.cls"
+      :aria-label="toggleBtn.ariaLabel"
+      :data-testid="toggleBtn.testid"
       @click="emit('toggle')"
-    >完成</button>
-    <button
-      v-else
-      type="button"
-      class="text-xs rounded border border-slate-300 dark:border-slate-600 text-slate-500 px-2 py-0.5 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-      :aria-label="'撤回：' + todo.title"
-      data-testid="kanban-undo-btn"
-      @click="emit('toggle')"
-    >撤回</button>
+    >{{ toggleBtn.text }}</button>
   </div>
 </template>
