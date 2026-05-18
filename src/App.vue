@@ -7,6 +7,7 @@ import { useColorThemeStore, type Theme } from './stores/colorTheme'
 const store = useTodoStore()
 const colorScheme = useColorSchemeStore()
 const colorTheme = useColorThemeStore()
+const MILESTONE = __MILESTONE__
 
 const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: 'default', label: '默认' },
@@ -164,6 +165,10 @@ function cancelEdit() {
       >
         <option v-for="t in THEME_OPTIONS" :key="t.value" :value="t.value">{{ t.label }}</option>
       </select>
+    </div>
+
+    <div class="mt-8 text-center text-xs text-slate-400" data-testid="milestone-footer">
+      当前阶段：{{ MILESTONE }}
     </div>
   </main>
 </template>

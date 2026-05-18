@@ -198,3 +198,10 @@ test('dark mode 切换 + 持久化', async ({ page }) => {
   await page.getByTestId('theme-toggle').click()
   await expect(html).not.toHaveClass(/dark/)
 })
+
+test('footer 显示当前 milestone', async ({ page }) => {
+  const footer = page.getByTestId('milestone-footer')
+  await expect(footer).toBeVisible()
+  await expect(footer).toContainText('当前阶段：')
+  await expect(footer).toContainText('数据持久化')
+})
