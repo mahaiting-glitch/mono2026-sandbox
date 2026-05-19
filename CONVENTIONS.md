@@ -40,7 +40,7 @@
 
 5、**默认无注释**——命名足够好就别写注释；非平凡的「为什么」（约束 / 不变量 / workaround）才写、且一行讲完。
 
-6、**测试三层都跑**：vitest 单测（store / 工具函数）+ Playwright e2e（关键链路）+ ESLint 静态检查（0 error / 0 warning，`--max-warnings 0`）。提交前 `pnpm lint && pnpm test && pnpm test:e2e` 必过（lint 最快、fail fast 排前）。pre-commit hook 暂不上、靠 dev session 自检 + CI 兜底。
+6、**测试三层都跑**：vitest 单测（store / 工具函数）+ Playwright e2e（关键链路）+ ESLint 静态检查（0 error / 0 warning，`--max-warnings 0`）。提交前 `pnpm lint && pnpm test && pnpm test:e2e` 必过（lint 最快、fail fast 排前）。pre-commit hook 暂不上、靠 dev session 自检 + CI 兜底。CI 即 `.github/workflows/ci.yml`：push / PR 触发、跑 `pnpm lint` → `pnpm test` → `pnpm test:e2e`（lint fail fast 排前、e2e 步骤前需先安装 Playwright 浏览器）。
 
    6a、**≥2 个 spec 共用相同前置逻辑时提取为 Playwright `base.extend` fixture**——当 ≥2 个 spec 文件写了**完全相同**的 `beforeEach`（如页面初始化 + localStorage 清理 + IDB 清理 + reload），应提取到 `tests/e2e/fixtures.ts`，用 `base.extend` 覆盖内置 `page` fixture；各 spec 从 `'./fixtures'` 导入 `test` 和 `expect`，不从 `'@playwright/test'` 直接导入再写重复 `beforeEach`。单文件内多 case 共享前置时可用 `test.beforeEach`；有特殊初始化需求（如 `addInitScript` 必须在 goto 前）的 spec 不适用此规则。范例：PR [#67](https://github.com/mahaiting-glitch/mono2026-sandbox/pull/67)。
 
