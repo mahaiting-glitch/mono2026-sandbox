@@ -46,7 +46,8 @@ watch(noteEditingId, (id) => {
 
 function cyclePriority(id: string, current: Priority) {
   const idx = PRIORITY_CYCLE.indexOf(current)
-  const next = PRIORITY_CYCLE[(idx + 1) % PRIORITY_CYCLE.length]!
+  const next = PRIORITY_CYCLE[(idx + 1) % PRIORITY_CYCLE.length]
+  if (next === undefined) return // type guard only; PRIORITY_CYCLE is constant non-empty
   todoStore.setPriority(id, next)
 }
 
