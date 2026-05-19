@@ -40,7 +40,7 @@
 
 5、**默认无注释**——命名足够好就别写注释；非平凡的「为什么」（约束 / 不变量 / workaround）才写、且一行讲完。
 
-6、**测试三层都跑**：vitest 单测（store / 工具函数）+ Playwright e2e（关键链路）+ ESLint 静态检查（0 error）。提交前 `pnpm lint && pnpm test && pnpm test:e2e` 必过（lint 最快、fail fast 排前）。pre-commit hook 暂不上、靠 dev session 自检 + CI 兜底。
+6、**测试三层都跑**：vitest 单测（store / 工具函数）+ Playwright e2e（关键链路）+ ESLint 静态检查（0 error / 0 warning，`--max-warnings 0`）。提交前 `pnpm lint && pnpm test && pnpm test:e2e` 必过（lint 最快、fail fast 排前）。pre-commit hook 暂不上、靠 dev session 自检 + CI 兜底。
 
    6a、**≥2 个 spec 共用相同前置逻辑时提取为 Playwright `base.extend` fixture**——当 ≥2 个 spec 文件写了**完全相同**的 `beforeEach`（如页面初始化 + localStorage 清理 + IDB 清理 + reload），应提取到 `tests/e2e/fixtures.ts`，用 `base.extend` 覆盖内置 `page` fixture；各 spec 从 `'./fixtures'` 导入 `test` 和 `expect`，不从 `'@playwright/test'` 直接导入再写重复 `beforeEach`。单文件内多 case 共享前置时可用 `test.beforeEach`；有特殊初始化需求（如 `addInitScript` 必须在 goto 前）的 spec 不适用此规则。范例：PR [#67](https://github.com/mahaiting-glitch/mono2026-sandbox/pull/67)。
 
@@ -71,6 +71,8 @@
    6d、**Playwright 选择器优先级：`getByRole` > stable testid > `getByText` > CSS selector；禁 xpath / `.nth()`**——选取交互元素时按优先级从高到低：①`getByRole('button', { name: '保存' })` / `getByLabel` / `getByPlaceholder`（语义定位、与 a11y 对齐、重构不失效）；②`getByTestId('save-btn')`（`data-testid` 携带稳定 id、见 6c）；③`getByText('保存')`（文本定位、文案变更即失效、慎用）；④CSS selector（`page.locator('.save-btn')`，最后兜底）。禁止用 xpath（`page.locator('//button[1]')`）——DOM 结构变化即失效；禁止用 `.nth(n)` 顺序定位可交互元素（列表重排后立刻失效，6c 的稳定 testid 就是为替代它而存在）。❌ `page.locator('button').nth(0).click()` / `page.locator('//form/button[2]')` → ✅ `page.getByRole('button', { name: '新建列表' }).click()` / `page.getByTestId('list-btn-abc123').click()`。
 
    6e、**禁止用 `waitForTimeout` 做流程等待——改用事件驱动等待**——`page.waitForTimeout(N)` 硬等固定毫秒是时间依赖 flaky 的来源（6d 覆盖选择器依赖，此条覆盖时间依赖）：等请求结束用 `waitForResponse`（**必须在触发操作前注册 promise**：`const resp = page.waitForResponse(url); await click(); await resp;`，不能 `await click()` 后再 `waitForResponse`）；等元素出现用 `await expect(locator).toBeVisible()`，等元素消失用 `await expect(locator).toBeHidden()`，等导航结束用 `page.waitForURL(pattern)`，等多次异步副作用收敛用 `await expect.poll(() => ...)` / `page.waitForLoadState('networkidle')`。调试期临时 sleep 不入库，改用 `--debug` / `page.pause()`。❌ `await page.waitForTimeout(500)` 等待请求完成 / 等弹窗出现 → ✅ `const resp = page.waitForResponse('/api/todos'); await triggerAction(); await resp;` 或 `await expect(page.getByTestId('dialog')).toBeVisible()`。
+
+   6f、**`eslint-disable-next-line` 必须同行尾 `-- 原因` 注释、禁文件级 disable**——使用 `eslint-disable-next-line` 时必须在同行尾用 ` -- 原因` 格式注释说明原因（如 `// eslint-disable-next-line @typescript-eslint/no-unused-vars -- 故意保留参数占位以匹配回调签名`）；禁止裸 `// eslint-disable-next-line xxx`（无原因 = 欠技术债、后人无从判断能否解除）；禁止文件头 `/* eslint-disable */`（整体绕过、应修根本问题）；若确需豁免整个文件（如 codegen 输出文件），在 `eslint.config.js` 的 `ignores` 数组里加文件路径（完全跳过该文件所有规则）；若只豁免某条特定规则，改用 flat config 的 `files` + `rules` 针对性配置块（`ignores` 是全文件豁免、不是规则级豁免）。❌ 裸 `// eslint-disable-next-line @typescript-eslint/no-explicit-any`（无原因、任意规则都要带原因）→ ✅ `// eslint-disable-next-line @typescript-eslint/no-unused-vars -- 故意保留参数占位以匹配回调签名`。❌ 文件头 `/* eslint-disable */` → ✅ `eslint.config.js` `ignores` 里加路径（全文件豁免）或 `files` + `rules` 配置块（规则级豁免）。
 
 7、**改动范围 ≤ 200 行 / PR**——拆得越细越好、单 issue 单关注点；大改动拆里程碑。
 
@@ -130,3 +132,6 @@
 - ❌（3f）action 内部未 catch 直接 throw 异步异常到组件层（`return await api.get(id)` 裸调）→ ✅ 包裹 `try/catch`，`catch (err)` 里 `console.error(...)` + `return null`（禁裸 `catch {}` 静默吞错；若确需 throw 须注释标注 `@throws`）
 - ❌（3g）`const x = (await store.createList(name))!` / `(await store.fetchTodo(id))!.title` / `items.find(i => i.id === id)!.name`（`!` 非空断言绕过 null/undefined 判断，运行期 throw）→ ✅ 先赋具名变量再 `if (x !== null) { ... }` 或早返 `if (x == null) return`（`== null` 同时排 null 和 undefined）
 - ❌（3h）`user?.profile!.name` / `store.getItem(id)?.value!` / `arr?.find(i => i.id === id)!.name`（`?.` 与 `!` 串用自相矛盾，`?.` 短路返回 undefined 时 `!` 无法阻止运行期 throw）→ ✅ `const profile = user?.profile; if (profile != null) { profile.name }` 或早返后直接 `.`：`if (user == null) return; user.profile.name`
+- ❌（6）lint 脚本无 `--max-warnings 0`（warning 默默累积不触发 CI 失败）→ ✅ `"lint": "eslint . --max-warnings 0"`
+- ❌（6f）裸 `// eslint-disable-next-line @typescript-eslint/no-explicit-any`（无原因、任意规则都要带原因）→ ✅ `// eslint-disable-next-line @typescript-eslint/no-unused-vars -- 故意保留参数占位以匹配回调签名`
+- ❌（6f）文件头 `/* eslint-disable */`（整体绕过 lint，应修根本问题）→ ✅ `eslint.config.js` `ignores` 里加路径（全文件豁免）或 `files` + `rules` 配置块（规则级豁免）
