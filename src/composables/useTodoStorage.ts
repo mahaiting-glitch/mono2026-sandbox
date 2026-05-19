@@ -62,7 +62,9 @@ async function migrateToV3(todos: Todo[]): Promise<Todo[]> {
   if (defaultListId) {
     resolvedDefaultListId = defaultListId
   } else if (lists.length > 0) {
-    resolvedDefaultListId = lists[0]!.id
+    // lists.length > 0 guarantees element; noUncheckedIndexedAccess requires explicit cast
+    const firstList = lists[0] as List
+    resolvedDefaultListId = firstList.id
     await listStorage.write(lists, resolvedDefaultListId)
   } else {
     const defaultList: List = { id: crypto.randomUUID(), title: '默认列表', createdAt: Date.now() }
