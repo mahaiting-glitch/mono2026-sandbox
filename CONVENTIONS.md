@@ -40,7 +40,7 @@
 
 5、**默认无注释**——命名足够好就别写注释；非平凡的「为什么」（约束 / 不变量 / workaround）才写、且一行讲完。
 
-6、**测试三层都跑**：vitest 单测（store / 工具函数）+ Playwright e2e（关键链路）。提交前 `pnpm test && pnpm test:e2e` 必过。
+6、**测试三层都跑**：vitest 单测（store / 工具函数）+ Playwright e2e（关键链路）+ ESLint 静态检查（0 error）。提交前 `pnpm lint && pnpm test && pnpm test:e2e` 必过（lint 最快、fail fast 排前）。pre-commit hook 暂不上、靠 dev session 自检 + CI 兜底。
 
    6a、**≥2 个 spec 共用相同前置逻辑时提取为 Playwright `base.extend` fixture**——当 ≥2 个 spec 文件写了**完全相同**的 `beforeEach`（如页面初始化 + localStorage 清理 + IDB 清理 + reload），应提取到 `tests/e2e/fixtures.ts`，用 `base.extend` 覆盖内置 `page` fixture；各 spec 从 `'./fixtures'` 导入 `test` 和 `expect`，不从 `'@playwright/test'` 直接导入再写重复 `beforeEach`。单文件内多 case 共享前置时可用 `test.beforeEach`；有特殊初始化需求（如 `addInitScript` 必须在 goto 前）的 spec 不适用此规则。范例：PR [#67](https://github.com/mahaiting-glitch/mono2026-sandbox/pull/67)。
 
@@ -97,6 +97,7 @@
 
 ## 反例
 
+- ❌ 提交前未跑 `pnpm lint`、PR 含 ESLint error（lint 与 `pnpm test` / `pnpm test:e2e` 同级、不可跳过）；或用 `eslint-disable` / `--no-verify` 绕过 lint error 强行提交（如需 disable 须单行注释说明原因）
 - ❌ boolean prop 不用 is/has/can 前缀：`completed`、`error`（应为 `isCompleted`、`hasError`）
 - ❌ emits 用字符串数组：`defineEmits(['toggle', 'delete'])`（应用类型签名 `defineEmits<{ toggle: []; delete: [id: string] }>()`）
 - ❌ Options API `export default { data() { return {...} } }`
