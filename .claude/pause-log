@@ -1,0 +1,5 @@
+2026-05-20T17:45:00+08:00 · 005-sortBy API 重构 · CRITICAL × 3 · check skill 触发 PAUSE_FLAG
+  - C1: 删 sortBy state（违反 MUST-4）
+  - C2: 删 sortDir state（违反 MUST-4）
+  - C3: 改 toggleSortDir 签名（违反 MUST-4）
+  状态: 等主对话介入
