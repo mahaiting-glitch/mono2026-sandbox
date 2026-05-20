@@ -3,3 +3,9 @@
   - C2: 删 sortDir state（违反 MUST-4）
   - C3: 改 toggleSortDir 签名（违反 MUST-4）
   状态: 等主对话介入
+
+2026-05-20T17:48:00+08:00 · 005-sortBy API 重构 · 主对话介入 · CRITICAL 缓解
+  - plan.md v2 改为 @deprecated 兼容方案、保留 existing 接口签名
+  - C1/C2/C3 状态: CRITICAL → HIGH（已缓解、保留记录）
+  - PAUSE_FLAG 已删除
+  - 流程恢复
